@@ -1,7 +1,7 @@
 package io.dddbyexamples.cqrs.model;
 
+import io.dddbyexamples.cqrs.controller.WithdrawalCommand;
 import io.dddbyexamples.cqrs.model.ports.CreditCardRecord;
-import io.dddbyexamples.cqrs.ui.WithdrawalCommand;
 
 import java.math.BigDecimal;
 import java.util.UUID;

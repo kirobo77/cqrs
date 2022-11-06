@@ -10,7 +10,8 @@ import javax.websocket.server.PathParam;
 import java.util.List;
 import java.util.UUID;
 
-@RestController("/withdrawals")
+@RestController
+@RequestMapping("/withdrawals")
 class WithdrawalsController {
 
     private final JdbcTemplate jdbcTemplate;
@@ -22,7 +23,7 @@ class WithdrawalsController {
     }
 
     @PostMapping
-    ResponseEntity withdraw(@RequestBody WithdrawalCommand withdrawalCommand) {
+    ResponseEntity<?> withdraw(@RequestBody WithdrawalCommand withdrawalCommand) {
         withdrawalProcess.withdraw(withdrawalCommand.getCard(), withdrawalCommand.getAmount());
         return ResponseEntity.ok().build();
     }
@@ -32,7 +33,8 @@ class WithdrawalsController {
         return ResponseEntity.ok().body(loadWithdrawalsFor(UUID.fromString(cardId)));
     }
 
-    private List<WithdrawalDto> loadWithdrawalsFor(@PathVariable UUID cardId) {
+    @SuppressWarnings("deprecation")
+	private List<WithdrawalDto> loadWithdrawalsFor(@PathVariable UUID cardId) {
         return jdbcTemplate.query("SELECT * FROM WITHDRAWAL WHERE CARD_ID = ?", new Object[]{cardId},
                 new BeanPropertyRowMapper<>(WithdrawalDto.class));
     }

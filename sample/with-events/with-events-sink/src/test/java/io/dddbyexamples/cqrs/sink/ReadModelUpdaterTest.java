@@ -18,7 +18,7 @@ import org.springframework.messaging.support.GenericMessage;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
-import io.dddbyexamples.cqrs.ui.WithdrawalDto;
+import io.dddbyexamples.cqrs.controller.WithdrawalDto;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)

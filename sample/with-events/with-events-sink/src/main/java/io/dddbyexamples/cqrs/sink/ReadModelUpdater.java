@@ -1,7 +1,8 @@
 package io.dddbyexamples.cqrs.sink;
 
-import io.dddbyexamples.cqrs.persistence.WithdrawalsRepository;
-import io.dddbyexamples.cqrs.ui.WithdrawalDto;
+import io.dddbyexamples.cqrs.controller.WithdrawalDto;
+import io.dddbyexamples.cqrs.repository.WithdrawalsRepository;
+
 import org.springframework.cloud.stream.annotation.StreamListener;
 import org.springframework.cloud.stream.messaging.Sink;
 import org.springframework.stereotype.Service;

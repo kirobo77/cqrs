@@ -1,19 +1,22 @@
 package io.dddbyexamples.cqrs.ui;
 
 import io.dddbyexamples.cqrs.application.WithdrawalProcess;
+
 import io.dddbyexamples.cqrs.model.Withdrawal;
 import io.dddbyexamples.cqrs.persistence.WithdrawalRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.websocket.server.PathParam;
 import java.util.List;
 import java.util.UUID;
 
-@RestController("/withdrawals")
+@RestController
+@RequestMapping("/withdrawals")
 class WithdrawalsController {
 
     private final WithdrawalRepository withdrawalRepository;
@@ -25,7 +28,7 @@ class WithdrawalsController {
     }
 
     @PostMapping
-    ResponseEntity withdraw(@RequestBody WithdrawalCommand withdrawalCommand) {
+    ResponseEntity<?> withdraw(@RequestBody WithdrawalCommand withdrawalCommand) {
         withdrawalProcess.withdraw(withdrawalCommand.getCard(), withdrawalCommand.getAmount());
         return ResponseEntity.ok().build();
     }

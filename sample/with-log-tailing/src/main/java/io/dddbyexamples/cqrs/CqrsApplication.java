@@ -1,9 +1,12 @@
 package io.dddbyexamples.cqrs;
 
-import io.dddbyexamples.cqrs.persistence.CreditCardRepository;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
+import io.dddbyexamples.cqrs.repository.CreditCardRepository;
+
+@EnableWebMvc
 @SpringBootApplication
 public class CqrsApplication {
 

@@ -10,8 +10,8 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 
+import io.dddbyexamples.cqrs.controller.WithdrawalCommand;
 import io.dddbyexamples.cqrs.model.ports.CreditCardRecord;
-import io.dddbyexamples.cqrs.ui.WithdrawalCommand;
 
 public class CreditCardTest {
 

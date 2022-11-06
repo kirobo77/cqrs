@@ -19,10 +19,10 @@ import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import io.dddbyexamples.cqrs.controller.WithdrawalCommand;
 import io.dddbyexamples.cqrs.model.CreditCard;
 import io.dddbyexamples.cqrs.model.Withdrawal;
-import io.dddbyexamples.cqrs.persistence.CreditCardRepository;
-import io.dddbyexamples.cqrs.ui.WithdrawalCommand;
+import io.dddbyexamples.cqrs.repository.CreditCardRepository;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
