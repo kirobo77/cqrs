@@ -1,5 +1,5 @@
 # Start with a base image containing Java runtime
-FROM openjdk:8-jdk-alpine
+FROM eclipse-temurin:17-jdk
 
 # Add Maintainer Info
 LABEL maintainer="jakub.pilimon@gmail.com"

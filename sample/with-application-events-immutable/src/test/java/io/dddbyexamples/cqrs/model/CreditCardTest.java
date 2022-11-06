@@ -1,17 +1,17 @@
 package io.dddbyexamples.cqrs.model;
 
-import io.dddbyexamples.cqrs.ui.WithdrawalCommand;
-import io.dddbyexamples.cqrs.model.ports.CreditCardRecord;
-import org.junit.Test;
-
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.util.UUID;
-
 import static java.math.BigDecimal.ONE;
 import static java.math.BigDecimal.TEN;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+
+import java.math.BigDecimal;
+import java.util.UUID;
+
+import org.junit.jupiter.api.Test;
+
+import io.dddbyexamples.cqrs.model.ports.CreditCardRecord;
+import io.dddbyexamples.cqrs.ui.WithdrawalCommand;
 
 public class CreditCardTest {
 

@@ -1,13 +1,13 @@
 package io.dddbyexamples.cqrs.model;
 
-import org.junit.Test;
-
-import java.math.BigDecimal;
-
 import static java.math.BigDecimal.ONE;
 import static java.math.BigDecimal.TEN;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+
+import java.math.BigDecimal;
+
+import org.junit.jupiter.api.Test;
 
 public class CreditCardTest {
 

@@ -1,10 +1,19 @@
 package io.dddbyexamples.cqrs.sink;
 
 
-import io.dddbyexamples.cqrs.model.CreditCard;
-import io.dddbyexamples.cqrs.model.Withdrawal;
-import io.dddbyexamples.cqrs.persistence.CreditCardRepository;
-import org.junit.Test;
+import static java.math.BigDecimal.TEN;
+import static java.math.BigDecimal.ZERO;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
+import static org.springframework.http.HttpMethod.GET;
+
+import java.math.BigDecimal;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -14,14 +23,9 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.messaging.support.GenericMessage;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.math.BigDecimal;
-import java.util.*;
-
-import static java.math.BigDecimal.TEN;
-import static java.math.BigDecimal.ZERO;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
-import static org.springframework.http.HttpMethod.GET;
+import io.dddbyexamples.cqrs.model.CreditCard;
+import io.dddbyexamples.cqrs.model.Withdrawal;
+import io.dddbyexamples.cqrs.persistence.CreditCardRepository;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)

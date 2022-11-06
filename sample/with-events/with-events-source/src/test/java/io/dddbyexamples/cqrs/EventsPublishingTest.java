@@ -1,12 +1,17 @@
 package io.dddbyexamples.cqrs;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.dddbyexamples.cqrs.persistence.CreditCardRepository;
-import io.dddbyexamples.cqrs.model.CardWithdrawn;
-import io.dddbyexamples.cqrs.model.CreditCard;
-import io.dddbyexamples.cqrs.ui.WithdrawalCommand;
+import static java.math.BigDecimal.TEN;
+import static org.awaitility.Awaitility.await;
+import static org.awaitility.Duration.FIVE_SECONDS;
+import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
+
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.util.UUID;
+import java.util.concurrent.BlockingQueue;
+
 import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -16,16 +21,12 @@ import org.springframework.cloud.stream.test.binder.MessageCollector;
 import org.springframework.messaging.Message;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.util.UUID;
-import java.util.concurrent.BlockingQueue;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-import static java.math.BigDecimal.TEN;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.awaitility.Awaitility.await;
-import static org.awaitility.Duration.FIVE_SECONDS;
-import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
+import io.dddbyexamples.cqrs.model.CardWithdrawn;
+import io.dddbyexamples.cqrs.model.CreditCard;
+import io.dddbyexamples.cqrs.persistence.CreditCardRepository;
+import io.dddbyexamples.cqrs.ui.WithdrawalCommand;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
