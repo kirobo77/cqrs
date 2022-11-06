@@ -1,15 +1,17 @@
 package io.dddbyexamples.cqrs.model;
 
+import java.util.UUID;
+import java.util.function.Function;
+
+import javax.transaction.Transactional;
+
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.stereotype.Component;
+
 import io.dddbyexamples.cqrs.DomainEvent;
 import io.dddbyexamples.cqrs.model.ports.CreditCardDao;
 import io.dddbyexamples.cqrs.model.ports.CreditCardRecord;
 import lombok.AllArgsConstructor;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.stereotype.Component;
-
-import javax.transaction.Transactional;
-import java.util.UUID;
-import java.util.function.Function;
 
 @Component
 @AllArgsConstructor

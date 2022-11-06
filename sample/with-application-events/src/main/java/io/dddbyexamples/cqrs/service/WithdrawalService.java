@@ -1,8 +1,9 @@
-package io.dddbyexamples.cqrs.application;
+package io.dddbyexamples.cqrs.service;
 
 import io.dddbyexamples.cqrs.model.CardWithdrawn;
 import io.dddbyexamples.cqrs.model.CreditCard;
-import io.dddbyexamples.cqrs.persistence.CreditCardRepository;
+import io.dddbyexamples.cqrs.repository.CreditCardRepository;
+
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
@@ -11,12 +12,12 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 @Service
-public class WithdrawalProcess {
+public class WithdrawalService {
 
     private final CreditCardRepository creditCardRepository;
     private final ApplicationEventPublisher applicationEventPublisher;
 
-    WithdrawalProcess(CreditCardRepository creditCardRepository, ApplicationEventPublisher applicationEventPublisher) {
+    WithdrawalService(CreditCardRepository creditCardRepository, ApplicationEventPublisher applicationEventPublisher) {
         this.creditCardRepository = creditCardRepository;
         this.applicationEventPublisher = applicationEventPublisher;
     }

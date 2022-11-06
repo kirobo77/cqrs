@@ -1,10 +1,11 @@
-package io.dddbyexamples.cqrs.ui;
+package io.dddbyexamples.cqrs.controller;
 
-import io.dddbyexamples.cqrs.application.WithdrawalProcess;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.*;
+
+import io.dddbyexamples.cqrs.service.WithdrawalService;
 
 import javax.websocket.server.PathParam;
 import java.util.List;
@@ -15,16 +16,16 @@ import java.util.UUID;
 class WithdrawalsController {
 
     private final JdbcTemplate jdbcTemplate;
-    private final WithdrawalProcess withdrawalProcess;
+    private final WithdrawalService withdrawalService;
 
-    WithdrawalsController(JdbcTemplate jdbcTemplate, WithdrawalProcess withdrawalsProcess) {
+    WithdrawalsController(JdbcTemplate jdbcTemplate, WithdrawalService withdrawalsProcess) {
         this.jdbcTemplate = jdbcTemplate;
-        this.withdrawalProcess = withdrawalsProcess;
+        this.withdrawalService = withdrawalsProcess;
     }
 
     @PostMapping
     ResponseEntity<?> withdraw(@RequestBody WithdrawalCommand withdrawalCommand) {
-        withdrawalProcess.withdraw(withdrawalCommand.getCard(), withdrawalCommand.getAmount());
+        withdrawalService.withdraw(withdrawalCommand.getCard(), withdrawalCommand.getAmount());
         return ResponseEntity.ok().build();
     }
 

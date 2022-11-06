@@ -12,15 +12,15 @@ import io.dddbyexamples.cqrs.service.WithdrawalService;
 @RequestMapping("/withdrawals")
 class WithdrawalsController {
 
-    private final WithdrawalService withdrawalProcess;
+    private final WithdrawalService withdrawalService;
 
     WithdrawalsController(WithdrawalService withdrawalsProcess) {
-        this.withdrawalProcess = withdrawalsProcess;
+        this.withdrawalService = withdrawalsProcess;
     }
 
     @PostMapping
     ResponseEntity<?> withdraw(@RequestBody WithdrawalCommand withdrawalCommand) {
-        withdrawalProcess.withdraw(withdrawalCommand.getCard(), withdrawalCommand.getAmount());
+        withdrawalService.withdraw(withdrawalCommand.getCard(), withdrawalCommand.getAmount());
         return ResponseEntity.ok().build();
     }
 

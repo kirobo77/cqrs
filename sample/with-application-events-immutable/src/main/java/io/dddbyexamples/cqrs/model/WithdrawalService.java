@@ -1,13 +1,13 @@
 package io.dddbyexamples.cqrs.model;
 
-import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import io.dddbyexamples.cqrs.controller.WithdrawalCommand;
+import lombok.AllArgsConstructor;
 
 @Service
 @AllArgsConstructor
-public class WithdrawalProcess {
+public class WithdrawalService {
 
     private final CreditCardRepository repository;
 

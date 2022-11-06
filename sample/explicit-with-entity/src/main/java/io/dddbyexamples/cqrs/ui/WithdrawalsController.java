@@ -20,16 +20,16 @@ import java.util.UUID;
 class WithdrawalsController {
 
     private final WithdrawalRepository withdrawalRepository;
-    private final WithdrawalProcess withdrawalProcess;
+    private final WithdrawalProcess withdrawalService;
 
     WithdrawalsController(WithdrawalRepository withdrawalRepository, WithdrawalProcess withdrawalsProcess) {
         this.withdrawalRepository = withdrawalRepository;
-        this.withdrawalProcess = withdrawalsProcess;
+        this.withdrawalService = withdrawalsProcess;
     }
 
     @PostMapping
     ResponseEntity<?> withdraw(@RequestBody WithdrawalCommand withdrawalCommand) {
-        withdrawalProcess.withdraw(withdrawalCommand.getCard(), withdrawalCommand.getAmount());
+        withdrawalService.withdraw(withdrawalCommand.getCard(), withdrawalCommand.getAmount());
         return ResponseEntity.ok().build();
     }
 

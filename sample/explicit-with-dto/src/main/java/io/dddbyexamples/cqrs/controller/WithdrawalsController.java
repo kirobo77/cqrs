@@ -22,16 +22,16 @@ import io.dddbyexamples.cqrs.servcie.WithdrawalService;
 class WithdrawalsController {
 
     private final JdbcTemplate jdbcTemplate;
-    private final WithdrawalService withdrawalProcess;
+    private final WithdrawalService withdrawalService;
 
     WithdrawalsController(JdbcTemplate jdbcTemplate, WithdrawalService withdrawalsProcess) {
         this.jdbcTemplate = jdbcTemplate;
-        this.withdrawalProcess = withdrawalsProcess;
+        this.withdrawalService = withdrawalsProcess;
     }
 
     @PostMapping
     ResponseEntity<?> withdraw(@RequestBody WithdrawalCommand withdrawalCommand) {
-        withdrawalProcess.withdraw(withdrawalCommand.getCard(), withdrawalCommand.getAmount());
+        withdrawalService.withdraw(withdrawalCommand.getCard(), withdrawalCommand.getAmount());
         return ResponseEntity.ok().build();
     }
 

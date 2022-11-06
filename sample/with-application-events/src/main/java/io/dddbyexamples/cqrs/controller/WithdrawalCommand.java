@@ -1,4 +1,4 @@
-package io.dddbyexamples.cqrs.ui;
+package io.dddbyexamples.cqrs.controller;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
