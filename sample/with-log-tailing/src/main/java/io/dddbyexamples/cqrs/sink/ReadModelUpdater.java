@@ -23,7 +23,7 @@ class ReadModelUpdater {
 
 	private final WithdrawalRepository withdrawalRepository;
 
-	@KafkaListener(topics="example-kafka-test")
+	@KafkaListener(topics="dbserver1.inventory.withdrawal")
 	public void handle(String kafkaMessage, Acknowledgment acknowledgment) {
 		
 		ObjectMapper mapper = new ObjectMapper();

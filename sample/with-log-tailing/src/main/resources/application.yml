@@ -12,7 +12,8 @@ spring:
       
   kafka:
     consumer:
-      bootstrap-servers: kafka:9092
+      bootstrap-servers:
+        - kafka:9092
       group-id: withdrwal-event
       auto-offset-reset: earliest
       
