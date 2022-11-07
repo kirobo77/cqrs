@@ -1,13 +1,14 @@
 package io.dddbyexamples.cqrs.controller;
 
-import lombok.AllArgsConstructor;
+import java.util.List;
+import java.util.UUID;
+
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PathVariable;
 
-import java.util.List;
-import java.util.UUID;
+import lombok.AllArgsConstructor;
 
 @Service
 @AllArgsConstructor

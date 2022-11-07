@@ -1,11 +1,13 @@
 package io.dddbyexamples.cqrs.repository;
 
-import io.dddbyexamples.cqrs.model.Withdrawal;
-import org.springframework.data.jpa.repository.JpaRepository;
-
 import java.util.List;
+import java.util.UUID;
 
-public interface WithdrawalRepository extends JpaRepository<Withdrawal, String> {
+import org.springframework.data.repository.CrudRepository;
 
-    List<Withdrawal> findByCardId(String cardId);
+import io.dddbyexamples.cqrs.model.Withdrawal;
+
+public interface WithdrawalRepository extends CrudRepository<Withdrawal, UUID> {
+
+    List<Withdrawal> findByCardId(UUID cardId);
 }

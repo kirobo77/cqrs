@@ -1,16 +1,15 @@
 package io.dddbyexamples.cqrs.model;
 
-import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
 
 public class CardWithdrawn {
 
     private UUID cardNo;
-    private BigDecimal amount;
+    private long amount;
     private Instant timestamp = Instant.now();
 
-    public CardWithdrawn(UUID cardNo, BigDecimal amount) {
+    public CardWithdrawn(UUID cardNo, long amount) {
         this.cardNo = cardNo;
         this.amount = amount;
     }
@@ -20,7 +19,7 @@ public class CardWithdrawn {
         return cardNo;
     }
 
-    public BigDecimal getAmount() {
+    public long getAmount() {
         return amount;
     }
 

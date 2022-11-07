@@ -40,10 +40,8 @@ class WithdrawalsController {
         return ResponseEntity.ok().body(loadWithdrawalsFor(UUID.fromString(cardId)));
     }
 
-    @SuppressWarnings("deprecation")
 	private List<WithdrawalDto> loadWithdrawalsFor(@PathVariable UUID cardId) {
-        return jdbcTemplate.query("SELECT * FROM WITHDRAWAL WHERE CARD_ID = ?", new Object[]{cardId},
-                new BeanPropertyRowMapper<>(WithdrawalDto.class));
+        return withdrawalService.withdraw(cardId);
     }
 }
 

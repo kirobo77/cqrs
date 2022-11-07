@@ -1,11 +1,11 @@
-CREATE TABLE IF NOT EXISTS credit_card (
-  id            UUID PRIMARY KEY,
+CREATE TABLE IF NOT EXISTS CREDIT_CARD (
+  id            VARCHAR(255) PRIMARY KEY,
   initial_limit DECIMAL(18,2) NOT NULL,
   used_limit    DECIMAL(18,2) NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS stored_domain_event (
-  id     UUID PRIMARY KEY,
+CREATE TABLE IF NOT EXISTS STORED_DOMAIN_EVENT (
+  id     VARCHAR(255) PRIMARY KEY,
   content   VARCHAR2(4096)    NOT NULL,
   sent   BOOLEAN    NOT NULL,
   event_timestamp   DATETIME   NOT NULL,

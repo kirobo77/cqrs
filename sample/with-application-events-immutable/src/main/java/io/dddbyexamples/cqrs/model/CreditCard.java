@@ -1,16 +1,15 @@
 package io.dddbyexamples.cqrs.model;
 
+import java.util.UUID;
+
 import io.dddbyexamples.cqrs.controller.WithdrawalCommand;
 import io.dddbyexamples.cqrs.model.ports.CreditCardRecord;
-
-import java.math.BigDecimal;
-import java.util.UUID;
 
 class CreditCard {
 
     private final UUID cardId;
-    private final BigDecimal usedLimit;
-    private final BigDecimal initialLimit;
+    private final long usedLimit;
+    private final long initialLimit;
 
 
     CreditCard(CreditCardRecord record) {
@@ -20,7 +19,7 @@ class CreditCard {
     }
 
     CardWithdrawn withdraw(WithdrawalCommand command) {
-        BigDecimal amount = command.getAmount();
+        long amount = command.getAmount();
         if (thereIsMoneyToWithdraw(amount)) {
             return new CardWithdrawn(cardId, amount);
         } else {
@@ -28,12 +27,12 @@ class CreditCard {
         }
     }
 
-    private BigDecimal availableBalance() {
-        return initialLimit.subtract(usedLimit);
+    private long availableBalance() {
+        return initialLimit - usedLimit;
     }
 
-    private boolean thereIsMoneyToWithdraw(BigDecimal amount) {
-        return availableBalance().compareTo(amount) >= 0;
+    private boolean thereIsMoneyToWithdraw(long amount) {
+        return availableBalance() >= amount;
     }
 
 }

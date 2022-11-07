@@ -1,52 +1,32 @@
 package io.dddbyexamples.cqrs.model;
 
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-
-import javax.persistence.*;
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.UUID;
 
-@Entity
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Table;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+
+@Getter
+@Setter
+@Builder
+@AllArgsConstructor
 @NoArgsConstructor
+@ToString
+@Table("CREDIT_CARD")
 public class CreditCard {
 
-    @Id @GeneratedValue @Getter
+    @Id
     private UUID id;
 
-    private BigDecimal initialLimit;
+    private long initialLimit;
 
-    private BigDecimal usedLimit = BigDecimal.ZERO;
+    private long usedLimit;
 
-    @OneToMany(cascade = CascadeType.ALL)
-    @JoinColumn(name = "cardId")
-    private List<Withdrawal> withdrawals = new ArrayList<>();
 
-    public CreditCard(BigDecimal limit) {
-        this.initialLimit = limit;
-    }
-
-    public void withdraw(BigDecimal amount) {
-        if (thereIsMoneyToWithdraw(amount)) {
-            usedLimit = usedLimit.add(amount);
-            withdrawals.add(new Withdrawal(amount, id));
-        } else {
-            throw new NotEnoughMoneyException(id, amount, availableBalance());
-        }
-    }
-
-    public BigDecimal availableBalance() {
-        return initialLimit.subtract(usedLimit);
-    }
-
-    private boolean thereIsMoneyToWithdraw(BigDecimal amount) {
-        return availableBalance().compareTo(amount) >= 0;
-    }
-
-    public List<Withdrawal> getWithdrawals() {
-        return Collections.unmodifiableList(withdrawals);
-    }
 }

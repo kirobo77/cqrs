@@ -1,44 +1,33 @@
 package io.dddbyexamples.cqrs.model;
 
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import java.math.BigDecimal;
 import java.util.UUID;
 
-@Entity
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Table;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+
+@Getter
+@Setter
+@Builder
+@AllArgsConstructor
 @NoArgsConstructor
+@ToString
+@Table("CREDIT_CARD")
 public class CreditCard {
 
-    @Id @GeneratedValue @Getter private UUID id;
-    private BigDecimal initialLimit;
-    private BigDecimal usedLimit = BigDecimal.ZERO;
+    @Id 
+    private UUID id;
+    private long initialLimit;
+    private long usedLimit;
 
-    public CreditCard(BigDecimal limit) {
+    public CreditCard(long limit) {
         this.initialLimit = limit;
-    }
-
-    public void withdraw(BigDecimal amount) {
-        if (thereIsMoneyToWithdraw(amount)) {
-            usedLimit = usedLimit.add(amount);
-        } else {
-            throw new NotEnoughMoneyException(id, amount, availableBalance());
-        }
-    }
-
-    public void chargeBack(BigDecimal amount) {
-        usedLimit = usedLimit.subtract(amount);
-    }
-
-    public BigDecimal availableBalance() {
-        return initialLimit.subtract(usedLimit);
-    }
-
-    private boolean thereIsMoneyToWithdraw(BigDecimal amount) {
-        return availableBalance().compareTo(amount) >= 0;
     }
 
 }

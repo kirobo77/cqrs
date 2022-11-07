@@ -1,8 +1,9 @@
 package io.dddbyexamples.cqrs.controller;
 
-import io.dddbyexamples.cqrs.model.Withdrawal;
-import io.dddbyexamples.cqrs.repository.CreditCardRepository;
-import io.dddbyexamples.cqrs.service.WithdrawalProcess;
+import java.util.List;
+import java.util.UUID;
+
+import javax.websocket.server.PathParam;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -11,31 +12,26 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.websocket.server.PathParam;
-import java.util.List;
-import java.util.UUID;
+import io.dddbyexamples.cqrs.model.Withdrawal;
+import io.dddbyexamples.cqrs.service.WithdrawalService;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/withdrawals")
+@RequiredArgsConstructor
 class WithdrawalsController {
 
-    private final CreditCardRepository creditCardRepository;
-    private final WithdrawalProcess withdrawalService;
-
-    WithdrawalsController(CreditCardRepository creditCardRepository, WithdrawalProcess withdrawalsProcess) {
-        this.creditCardRepository = creditCardRepository;
-        this.withdrawalService = withdrawalsProcess;
-    }
+    private final WithdrawalService withdrawalService;
 
     @PostMapping
-    ResponseEntity withdraw(@RequestBody WithdrawalCommand withdrawalCommand) {
-        withdrawalService.withdraw(withdrawalCommand.getCard(), withdrawalCommand.getAmount());
+    ResponseEntity<?> withdraw(@RequestBody WithdrawalCommand withdrawalCommand) {
+        withdrawalService.withdraw(withdrawalCommand.getCardId(), withdrawalCommand.getAmount());
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping
+	@GetMapping
     ResponseEntity<List<Withdrawal>> withdrawals(@PathParam("cardId") String cardId) {
-        return ResponseEntity.ok().body(creditCardRepository.getOne(UUID.fromString(cardId)).getWithdrawals());
+        return ResponseEntity.ok().body(withdrawalService.withdraw(UUID.fromString(cardId)));
     }
 }
 

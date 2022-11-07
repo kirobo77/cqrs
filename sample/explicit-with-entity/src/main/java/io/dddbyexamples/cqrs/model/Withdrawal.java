@@ -1,24 +1,44 @@
 package io.dddbyexamples.cqrs.model;
 
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import java.math.BigDecimal;
 import java.util.UUID;
 
-@Entity
+import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Transient;
+import org.springframework.data.domain.Persistable;
+import org.springframework.data.relational.core.mapping.Table;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+
+@Getter
+@Setter
+@Builder
+@AllArgsConstructor
 @NoArgsConstructor
-public class Withdrawal {
+@ToString
+@Table("WITHDRAWAL")
+public class Withdrawal implements Persistable<UUID>{
 
-    @Id @GeneratedValue private UUID id;
-    private @Getter BigDecimal amount;
-    private @Getter UUID cardId;
-
-    public Withdrawal(BigDecimal amount, UUID cardNo) {
-        this.amount = amount;
-        this.cardId = cardNo;
+    @Transient
+    private boolean isNew = false;
+    
+    @Id
+    private UUID id;
+    private long amount;
+    private UUID cardId;
+    
+    public static Withdrawal newWithdrawal(UUID id, long amount, UUID cardId) {
+    	Withdrawal withdrawal = new Withdrawal(true, id, amount, cardId);
+        return withdrawal;
     }
+
+    @Override
+    public boolean isNew() {
+        return isNew;
+    }
+
 }

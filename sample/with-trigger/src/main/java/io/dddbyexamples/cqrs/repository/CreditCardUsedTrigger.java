@@ -1,12 +1,11 @@
 package io.dddbyexamples.cqrs.repository;
 
-import org.h2.api.Trigger;
-
-import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.UUID;
+
+import org.h2.api.Trigger;
 
 public class CreditCardUsedTrigger implements Trigger {
 
@@ -31,8 +30,8 @@ public class CreditCardUsedTrigger implements Trigger {
         return cardRow[0];
     }
 
-    private BigDecimal getUsedLimitChange(Object[] oldCardRow, Object[] newCardRow) {
-        return ((BigDecimal) newCardRow[2]).subtract((BigDecimal) oldCardRow[2]);
+    private long getUsedLimitChange(Object[] oldCardRow, Object[] newCardRow) {
+        return (long) newCardRow[2] - (long) oldCardRow[2];
     }
 
     @Override

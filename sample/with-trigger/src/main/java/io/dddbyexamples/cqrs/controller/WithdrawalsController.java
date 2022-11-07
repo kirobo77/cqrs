@@ -16,18 +16,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.dddbyexamples.cqrs.service.WithdrawalService;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/withdrawals")
+@RequiredArgsConstructor
 class WithdrawalsController {
 
-    private final JdbcTemplate jdbcTemplate;
     private final WithdrawalService withdrawalService;
 
-    WithdrawalsController(JdbcTemplate jdbcTemplate, WithdrawalService withdrawalsProcess) {
-        this.jdbcTemplate = jdbcTemplate;
-        this.withdrawalService = withdrawalsProcess;
-    }
 
     @PostMapping
     ResponseEntity withdraw(@RequestBody WithdrawalCommand withdrawalCommand) {
@@ -37,12 +34,9 @@ class WithdrawalsController {
 
     @GetMapping
     ResponseEntity<List<WithdrawalDto>> withdrawals(@PathParam("cardId") String cardId) {
-        return ResponseEntity.ok().body(loadWithdrawalsFor(UUID.fromString(cardId)));
+        return ResponseEntity.ok().body(withdrawalService.loadWithdrawalsFor(UUID.fromString(cardId)));
     }
 
-    private List<WithdrawalDto> loadWithdrawalsFor(@PathVariable UUID cardId) {
-        return jdbcTemplate.query("SELECT * FROM WITHDRAWAL WHERE CARD_ID = ?", new Object[]{cardId},
-                new BeanPropertyRowMapper<>(WithdrawalDto.class));
-    }
+
 }
 
