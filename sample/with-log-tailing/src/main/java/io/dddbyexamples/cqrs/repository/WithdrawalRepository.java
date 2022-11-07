@@ -7,7 +7,7 @@ import org.springframework.data.repository.CrudRepository;
 
 import io.dddbyexamples.cqrs.model.Withdrawal;
 
-public interface WithdrawalRepository extends CrudRepository<Withdrawal, UUID> {
+public interface WithdrawalRepository extends CrudRepository<Withdrawal, String> {
 
     List<Withdrawal> findByCardId(UUID cardId);
 }

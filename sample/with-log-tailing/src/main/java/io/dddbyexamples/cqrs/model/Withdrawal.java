@@ -21,17 +21,17 @@ import lombok.ToString;
 @NoArgsConstructor
 @ToString
 @Table("WITHDRAWAL")
-public class Withdrawal implements Persistable<UUID>{
+public class Withdrawal implements Persistable<String>{
 
     @Transient
     private boolean isNew = false;
     
     @Id
-    private UUID id;
+    private String id;
     private long amount;
-    private UUID cardId;
+    private String cardId;
     
-    public static Withdrawal newWithdrawal(UUID id, long amount, UUID cardId) {
+    public static Withdrawal newWithdrawal(String id, long amount, String cardId) {
     	Withdrawal withdrawal = new Withdrawal(true, id, amount, cardId);
         return withdrawal;
     }

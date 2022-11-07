@@ -23,9 +23,9 @@ class ReadModelUpdater {
 
 	private final WithdrawalRepository withdrawalRepository;
 
-	@KafkaListener(topics="dbserver1.inventory.withdrawal")
+	@KafkaListener(topics="dbserver1.inventory.credit_card")
 	public void handle(String kafkaMessage, Acknowledgment acknowledgment) {
-		
+		log.info("kafkaMessage = {}", kafkaMessage);
 		ObjectMapper mapper = new ObjectMapper();
 		Envelope message = null;
 		try {
@@ -40,10 +40,10 @@ class ReadModelUpdater {
 	}
 
 	private void saveWithdrawalFrom(Envelope message) {
-		UUID cardId = UUID.fromString(message.getPayload().getBefore().getId());
+		String cardId = message.getPayload().getBefore().getId();
 		long withdrawalAmount
 				= balanceAfter(message) - balanceBefore(message);
-		 withdrawalRepository.save(Withdrawal.newWithdrawal(UUID.randomUUID(), withdrawalAmount, cardId));
+		 withdrawalRepository.save(Withdrawal.newWithdrawal(UUID.randomUUID().toString(), withdrawalAmount, cardId));
 	}
 
 	private long balanceAfter(Envelope message) {

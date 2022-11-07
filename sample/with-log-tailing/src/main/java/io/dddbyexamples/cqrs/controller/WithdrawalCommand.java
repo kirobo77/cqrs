@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class WithdrawalCommand {
-    private UUID card;
+    private String card;
     private long amount;
 
 }

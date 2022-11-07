@@ -9,8 +9,8 @@ import org.springframework.transaction.annotation.Transactional;
 import io.dddbyexamples.cqrs.model.CreditCard;
 import io.dddbyexamples.cqrs.model.NotEnoughMoneyException;
 import io.dddbyexamples.cqrs.model.Withdrawal;
-import io.dddbyexamples.cqrs.persistence.CreditCardRepository;
-import io.dddbyexamples.cqrs.persistence.WithdrawalRepository;
+import io.dddbyexamples.cqrs.repository.CreditCardRepository;
+import io.dddbyexamples.cqrs.repository.WithdrawalRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -47,7 +47,7 @@ public class WithdrawalService {
 	private boolean thereIsMoneyToWithdraw(CreditCard creditCard, long amount) {
 		return availableBalance(creditCard) >= amount;
 	}
-
+	
 
 	public List<Withdrawal> withdraw(UUID cardId) {
 		return withdrawalRepository.findByCardId(cardId);

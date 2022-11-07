@@ -1,19 +1,19 @@
 server:
-  port: 8080
+  port: 8081
   
 spring:     
   devtools:
     restart:
       enabled: true    
   datasource:
-    url: jdbc:mysql://mysql:3306/inventory?autoReconnect=true&useSSL=false
+    url: jdbc:mysql://localhost:3306/inventory?autoReconnect=true&useSSL=false
     username: mysqluser
     password: mysqlpw
       
   kafka:
     consumer:
       bootstrap-servers:
-        - kafka:9092
+        - localhost:9092
       group-id: withdrwal-event
       auto-offset-reset: earliest
       
@@ -22,4 +22,4 @@ spring:
     listener:      
        ack-mode: MANUAL_IMMEDIATE
     producer:
-      bootstrap-servers: kafka:9092    
+      bootstrap-servers: localhost:9092    

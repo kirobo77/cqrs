@@ -18,11 +18,11 @@ import lombok.ToString;
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString
-@Table("CREDIT_CARD")
+@Table("credit_card")
 public class CreditCard {
 
     @Id
-    private UUID id;
+    private String id;
 
     private long initialLimit;
 

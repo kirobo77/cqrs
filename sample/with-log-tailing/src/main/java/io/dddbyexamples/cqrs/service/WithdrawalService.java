@@ -24,7 +24,8 @@ public class WithdrawalService {
     private final WithdrawalRepository withdrawalRepository;
 
     @Transactional
-    public void withdraw(UUID cardId, long amount) {
+    public void withdraw(String cardId, long amount) {
+    	log.info("cardId = {}",cardId.toString());
         CreditCard creditCard = creditCardRepository.findById(cardId)
                 .orElseThrow(() -> new IllegalStateException("Cannot find card with id " + cardId));
         withdraw(creditCard, amount);
