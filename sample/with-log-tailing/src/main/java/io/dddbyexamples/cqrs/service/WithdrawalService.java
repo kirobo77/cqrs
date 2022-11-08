@@ -49,7 +49,7 @@ public class WithdrawalService {
 		return availableBalance(creditCard) >= amount;
 	}
 	
-	public List<Withdrawal> withdraw(UUID cardId) {
+	public List<Withdrawal> withdraw(String cardId) {
 		return withdrawalRepository.findByCardId(cardId);
 	}
 

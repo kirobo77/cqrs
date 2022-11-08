@@ -14,7 +14,7 @@ spring:
     consumer:
       bootstrap-servers:
         - localhost:9092
-      group-id: withdrwal-event
+      group-id: inventory-event
       auto-offset-reset: earliest
       
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer

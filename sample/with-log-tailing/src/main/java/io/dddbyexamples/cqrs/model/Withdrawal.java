@@ -20,7 +20,7 @@ import lombok.ToString;
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString
-@Table("WITHDRAWAL")
+@Table("withdrawal")
 public class Withdrawal implements Persistable<String>{
 
     @Transient

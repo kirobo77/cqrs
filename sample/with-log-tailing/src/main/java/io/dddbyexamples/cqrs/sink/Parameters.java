@@ -9,15 +9,12 @@ import lombok.Data;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
-    "schema",
-    "payload"
+    "scale"
 })
 @Data
-public class Envelope {
+public class Parameters {
 
-    @JsonProperty("schema")
-    public Schema schema;
-    @JsonProperty("payload")
-    public Payload payload;
+    @JsonProperty("scale")
+    public String scale;
 
 }

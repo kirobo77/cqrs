@@ -22,22 +22,24 @@ import lombok.extern.slf4j.Slf4j;
 class ReadModelUpdater {
 
 	private final WithdrawalRepository withdrawalRepository;
-
-	@KafkaListener(topics="dbserver1.inventory.credit_card")
-	public void handle(String kafkaMessage, Acknowledgment acknowledgment) {
-		log.info("kafkaMessage = {}", kafkaMessage);
+	
+	@KafkaListener(topics="credit_card")
+	public void handle2(String kafkaMessage, Acknowledgment acknowledgment) {
+		log.info("credit_card kafkaMessage = {}", kafkaMessage);
 		ObjectMapper mapper = new ObjectMapper();
 		Envelope message = null;
 		try {
 			message  = mapper.readValue(kafkaMessage, Envelope.class);
+			log.info("message = {}", message);
 		} catch (JsonProcessingException e) {
 			e.printStackTrace();
 		}
 		
-		if(message.isUpdate()) {
+		if("u".equals(message.getPayload().getOp())) {
 			saveWithdrawalFrom(message);
 		}
 	}
+	
 
 	private void saveWithdrawalFrom(Envelope message) {
 		String cardId = message.getPayload().getBefore().getId();
@@ -47,11 +49,11 @@ class ReadModelUpdater {
 	}
 
 	private long balanceAfter(Envelope message) {
-		return message.getPayload().getAfter().getUsed_limit();
+		return message.getPayload().getAfter().getUsedLimit();
 	}
 
 	private long balanceBefore(Envelope message) {
-		return message.getPayload().getBefore().getUsed_limit();
+		return message.getPayload().getBefore().getUsedLimit();
 	}
 
 
