@@ -5,8 +5,8 @@ import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
-import com.kt.cqrs.query.controller.Withdrawal;
 import com.kt.cqrs.query.repository.WithdrawalRepository;
+import com.kt.cqrs.query.repository.entity.Withdrawal;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

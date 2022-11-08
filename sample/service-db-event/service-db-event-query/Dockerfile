@@ -1,9 +1,6 @@
 # Start with a base image containing Java runtime
 FROM eclipse-temurin:17-jdk
 
-# Add Maintainer Info
-LABEL maintainer="jakub.pilimon@gmail.com"
-
 # Add a volume pointing to /tmp
 VOLUME /tmp
 
@@ -17,4 +14,4 @@ ARG JAR_FILE=target/service-db-event-query-0.0.1-SNAPSHOT.jar
 ADD ${JAR_FILE} service-db-event-query.jar
 
 # Run the jar file 
-ENTRYPOINT ["java","-Djava.security.egd=file:/dev/./urandom","-jar","/with-events-sink.jar"]
+ENTRYPOINT ["java","-Djava.security.egd=file:/dev/./urandom","-jar","/service-db-event-query.jar"]

@@ -1,4 +1,4 @@
-package com.kt.cqrs.query.controller;
+package com.kt.cqrs.query.repository.entity;
 
 import java.util.UUID;
 

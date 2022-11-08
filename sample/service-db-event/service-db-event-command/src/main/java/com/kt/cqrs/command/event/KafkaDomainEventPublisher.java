@@ -1,5 +1,7 @@
 package com.kt.cqrs.command.event;
 
+import java.util.List;
+
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -18,12 +20,12 @@ public class KafkaDomainEventPublisher implements DomainEventPublisher {
 
     private final DomainEventsStorage domainEventStorage;
     private final ObjectMapper objectMapper;
-    private KafkaTemplate<String, String> kafkaTemplate;
+    private final KafkaTemplate<String, String> kafkaTemplate;
 
     @Override
     public void publish(DomainEvent domainEvent) {
         try {
-            domainEventStorage.save(new StoredDomainEvent(objectMapper.writeValueAsString(domainEvent), domainEvent.getType()));
+            domainEventStorage.save(StoredDomainEvent.newStoredDomainEvent(objectMapper.writeValueAsString(domainEvent), domainEvent.getType()));
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
@@ -33,16 +35,15 @@ public class KafkaDomainEventPublisher implements DomainEventPublisher {
     @Scheduled(fixedRate = 2000)
     @Transactional
     public void publishExternally() {
-        domainEventStorage
-                .findAllBySentOrderByEventTimestampDesc(false)
-                .forEach(event -> {
-                            kafkaTemplate.send("domain-event", event.getContent());
-                            event.sent();
-                        }
-
-                );
+    	log.info("publishExternally");
+    	List<StoredDomainEvent> storedDomainEvents = domainEventStorage.findAllBySentOrderByEventTimestampDesc(false);
+    	for(StoredDomainEvent storedDomainEvent: storedDomainEvents) {
+    		log.info("storedDomainEvent = {}",storedDomainEvent);
+    		kafkaTemplate.send("domain-event", storedDomainEvent.getContent());
+    		storedDomainEvent.setSent(true);
+    		domainEventStorage.save(storedDomainEvent);
+    	}
+               
     }
-    
-    
-    
+ 
 }

@@ -1,7 +1,7 @@
-package com.kt.cqrs.command.model;
+package com.kt.cqrs.command.repository.entity;
 
 
-import java.time.Instant;
+import java.util.Date;
 import java.util.UUID;
 
 import com.kt.cqrs.command.event.DomainEvent;
@@ -10,7 +10,7 @@ public class CardWithdrawn implements DomainEvent {
 
     private UUID cardNo;
     private long amount;
-    private Instant timestamp = Instant.now();
+    private Date timestamp = new Date();
 
     public CardWithdrawn(UUID cardNo, long amount) {
         this.cardNo = cardNo;
@@ -29,7 +29,7 @@ public class CardWithdrawn implements DomainEvent {
         return amount;
     }
 
-    public Instant getTimestamp() {
+    public Date getTimestamp() {
         return timestamp;
     }
 

@@ -1,4 +1,4 @@
-package com.kt.cqrs.command.model;
+package com.kt.cqrs.command.repository.entity;
 
 import java.util.UUID;
 

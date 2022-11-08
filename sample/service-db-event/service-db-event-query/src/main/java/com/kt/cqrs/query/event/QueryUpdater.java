@@ -8,8 +8,8 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.kt.cqrs.query.controller.Withdrawal;
 import com.kt.cqrs.query.repository.WithdrawalRepository;
+import com.kt.cqrs.query.repository.entity.Withdrawal;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

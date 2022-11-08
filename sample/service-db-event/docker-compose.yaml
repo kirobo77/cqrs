@@ -1,26 +1,19 @@
 version: "3.1"
 
 services:
-  sink:
+  command:
     build: ./service-db-event-command
-    ports:
-      - 8888:8888
-    links:
-      - mongodb
-      - kafka
-
-
-  source:
-    build: ./service-db-event-query
     ports:
       - 8080:8080
     links:
       - kafka
 
-  mongodb:
-    image: mongo:latest
+  query:
+    build: ./service-db-event-query
     ports:
-      - 27017:27017
+      - 8888:8888
+    links:
+      - kafka
 
   zookeeper:
     image: debezium/zookeeper:0.8
@@ -36,4 +29,5 @@ services:
      - zookeeper
     environment:
      - ZOOKEEPER_CONNECT=zookeeper:2181
-     - ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
+     - ADVERTISED_LISTENERS=PLAINTEXT://host.docker.internal:9092
+     - KAFKA_CREATE_TOPICS=domain-event 

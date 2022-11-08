@@ -5,7 +5,7 @@ import java.util.UUID;
 
 import org.springframework.data.repository.CrudRepository;
 
-import com.kt.cqrs.query.controller.Withdrawal;
+import com.kt.cqrs.query.repository.entity.Withdrawal;
 
 public interface WithdrawalRepository extends CrudRepository<Withdrawal, UUID> {
 

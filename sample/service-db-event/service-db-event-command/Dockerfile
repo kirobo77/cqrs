@@ -14,4 +14,4 @@ ARG JAR_FILE=target/service-db-event-command-0.0.1-SNAPSHOT.jar
 ADD ${JAR_FILE} service-db-event-command.jar
 
 # Run the jar file 
-ENTRYPOINT ["java","-Djava.security.egd=file:/dev/./urandom","-jar","/with-source-sink.jar"]
+ENTRYPOINT ["java","-Djava.security.egd=file:/dev/./urandom","-jar","/service-db-event-command.jar"]
