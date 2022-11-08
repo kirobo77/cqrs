@@ -1729,7 +1729,7 @@ public void handle(SeatsAdded event) {
 - 자바 8+
 - [도커 작성](https://docs.docker.com/compose/)
 
-## 5.2 개요
+## 5.2. 개요
 
 샘플 애플리케이션은 신용 카드를 제공하는 간단한 도메인을 기반으로 합니다. 두 가지 사용 사례가 있습니다.
 
@@ -1748,7 +1748,7 @@ After a successful Withdraw command, a withdrawal should be seen in a result fro
 
 [![색상 코드](https://github.com/ddd-by-examples/all-things-cqrs/raw/master/colorcode.jpg)](https://github.com/ddd-by-examples/all-things-cqrs/blob/master/colorcode.jpg)
 
-### 하나의 클래스에서 처리되는 명령 및 쿼리(CQRS 없음)
+## 5.3. 클래스에서 처리되는 명령 및 쿼리(CQRS 없음)
 
 코드는 [in-one-class](https://github.com/ddd-by-examples/all-things-cqrs/tree/master/in-one-class) 모듈에서 찾을 수 있습니다.
 
@@ -1794,7 +1794,7 @@ REST API에 대한 자동 E2E 테스트는 [여기](https://github.com/ddd-by-ex
     }
 ```
 
-### 명시적 동기화로 애플리케이션 서비스를 사용하는 CQRS
+## 5.4. 명시적 동기화로 애플리케이션 서비스를 사용하는 CQRS
 
 코드는 [명시적-with-dto](https://github.com/ddd-by-examples/all-things-cqrs/tree/master/explicit-with-dto) 모듈에서 찾을 수 있습니다. 동일한 버전이지만 JPA 엔터티가 있는 쿼리 결과는 [여기](https://github.com/ddd-by-examples/all-things-cqrs/tree/master/explicit-with-entity) 에서 찾을 수 있습니다 .
 
@@ -1840,7 +1840,7 @@ REST API에 대한 자동 E2E 테스트는 [여기](https://github.com/ddd-by-ex
     }
 ```
 
-### 암시적 동기화로 스프링 애플리케이션 이벤트가 있는 CQRS
+## 5.5. 암시적 동기화로 스프링 애플리케이션 이벤트가 있는 CQRS
 
 코드는 [with-application-events](https://github.com/ddd-by-examples/all-things-cqrs/tree/master/with-application-events) 모듈에서 찾을 수 있습니다.
 
@@ -1888,7 +1888,7 @@ REST API에 대한 자동 E2E 테스트는 [여기](https://github.com/ddd-by-ex
     }
 ```
 
-### 암시적 동기화로 트리거가 있는 CQRS
+## 5.6. 암시적 동기화로 트리거가 있는 CQRS
 
 코드는 [트리거](https://github.com/ddd-by-examples/all-things-cqrs/tree/master/with-trigger) 모듈에서 찾을 수 있습니다.
 
@@ -1934,7 +1934,7 @@ REST API에 대한 자동 E2E 테스트는 [여기](https://github.com/ddd-by-ex
     }
 ```
 
-### 동기화로 트랜잭션 로그 테일링이 있는 CQRS
+## 5.7. 동기화로 트랜잭션 로그 테일링이 있는 CQRS
 
 데이터베이스 관리 시스템에서 수락한 트랜잭션의 로그인 데이터베이스의 [트랜잭션 로그](https://en.wikipedia.org/wiki/Transaction_log) 를 수신하여 동기화 합니다.
 
@@ -2003,7 +2003,7 @@ curl http://localhost:8080/withdrawals?cardId=3a3e99f0-5ad9-47fa-961d-d75fab32ef
     }
 ```
 
-### 도메인 이벤트를 동기화로 사용하는 CQRS
+## 5.8. 도메인 이벤트를 동기화로 사용하는 CQRS
 
 명령을 성공적으로 처리한 후 도메인 이벤트를 전송하여 동기화를 수행합니다.
 
