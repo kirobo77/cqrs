@@ -5,10 +5,8 @@ import java.util.UUID;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import com.kt.cqrs.command.repository.CreditCardRepository;
 import com.kt.cqrs.command.repository.entity.CreditCard;
-import com.kt.cqrs.command.repository.entity.NotEnoughMoneyException;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -46,6 +44,5 @@ public class WithdrawalCommandService {
 	private boolean thereIsMoneyToWithdraw(CreditCard creditCard, long amount) {
 		return availableBalance(creditCard) >= amount;
 	}
-
 
 }

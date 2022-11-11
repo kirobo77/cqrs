@@ -5,14 +5,10 @@ spring:
   devtools:
     restart:
       enabled: true
-  h2:
-    console:
-      enabled: true
-      settings:
-        web-allow-others: true
-      path: /h2-console        
   datasource:
-    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1
+    url: jdbc:mysql://mysql:3306/inventory?autoReconnect=true&useSSL=false
+    username: mysqluser
+    password: mysqlpw
     
   kafka:
     bootstrap-servers:    - kafka:9092

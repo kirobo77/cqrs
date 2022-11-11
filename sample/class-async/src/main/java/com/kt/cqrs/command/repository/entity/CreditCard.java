@@ -20,13 +20,8 @@ import lombok.ToString;
 @ToString
 @Table("CREDIT_CARD")
 public class CreditCard {
-
     @Id
     private UUID id;
-
     private long initialLimit;
-
     private long usedLimit;
-
-
 }

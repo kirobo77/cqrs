@@ -8,7 +8,6 @@ import org.springframework.transaction.annotation.Transactional;
 import com.kt.cqrs.command.repository.CreditCardRepository;
 import com.kt.cqrs.command.repository.WithdrawalRepository;
 import com.kt.cqrs.command.repository.entity.CreditCard;
-import com.kt.cqrs.command.repository.entity.NotEnoughMoneyException;
 import com.kt.cqrs.command.repository.entity.Withdrawal;
 
 import lombok.RequiredArgsConstructor;
@@ -48,5 +47,4 @@ public class WithdrawalCommandService {
 		return availableBalance(creditCard) >= amount;
 	}
 	
-
 }

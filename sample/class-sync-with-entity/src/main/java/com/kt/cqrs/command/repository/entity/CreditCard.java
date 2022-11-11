@@ -23,10 +23,7 @@ public class CreditCard {
 
     @Id
     private UUID id;
-
     private long initialLimit;
-
     private long usedLimit;
-
 
 }

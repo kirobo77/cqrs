@@ -1,9 +1,6 @@
 # Start with a base image containing Java runtime
 FROM eclipse-temurin:17-jdk
 
-# Add a volume pointing to /tmp
-VOLUME /tmp
-
 # Make port 8888 available to the world outside this container
 EXPOSE 8888
 

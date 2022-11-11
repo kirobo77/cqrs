@@ -14,6 +14,4 @@ public class CardWithdrawn {
     private Date timestamp;
     private String type;
 
-   
-
 }

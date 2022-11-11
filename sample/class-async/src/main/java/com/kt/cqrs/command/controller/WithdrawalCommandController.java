@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.kt.cqrs.command.payload.WithdrawalCommand;
 import com.kt.cqrs.command.service.WithdrawalCommandService;
 
 import lombok.RequiredArgsConstructor;

@@ -1302,6 +1302,14 @@ curl http://localhost:8080/withdrawal?cardId=3a3e99f0-5ad9-47fa-961d-d75fab32ef0
 [{"amount":10.00}]
 ```
 
+- 데이터 확인
+
+```http
+http://localhost:8080/h2-console/
+```
+
+
+
 
 
 ## 3.6. 단일 프로세스로 처리되는 동기식 CQRS - Entity
@@ -1942,7 +1950,11 @@ curl http://localhost:8080/withdrawal?cardId=3a3e99f0-5ad9-47fa-961d-d75fab32ef0
 [{"amount":10.00}]
 ```
 
+- 데이터 확인
 
+```http
+http://localhost:8080/h2-console/
+```
 
 
 
@@ -2457,7 +2469,11 @@ curl http://localhost:8080/withdrawal?cardId=3a3e99f0-5ad9-47fa-961d-d75fab32ef0
 [{"amount":10.00}]
 ```
 
+- 데이터 확인
 
+```http
+http://localhost:8080/h2-console/
+```
 
 
 
@@ -3031,6 +3047,12 @@ curl http://localhost:8080/withdrawal?cardId=3a3e99f0-5ad9-47fa-961d-d75fab32ef0
 
 ```shell
 [{"amount":10.00}]
+```
+
+- 데이터 확인
+
+```http
+http://localhost:8080/h2-console/
 ```
 
 
@@ -3775,9 +3797,12 @@ curl http://localhost:8080/withdrawal?cardId=3a3e99f0-5ad9-47fa-961d-d75fab32ef0
     
     ```
   
-    
 
-### 3.9.4. 테스트
+> ** 명령과 조회서비스로 분리해 본다.**
+
+
+
+### 3.9.4. **테스트**
 
 - 키드인출(명령)
 
@@ -3797,758 +3822,21 @@ curl http://localhost:8080/withdrawal?cardId=3a3e99f0-5ad9-47fa-961d-d75fab32ef0
 [{"amount":10.00}]
 ```
 
+- 데이터 확인
+
+```http
+http://localhost:8080/h2-console/
+```
 
 
 
 
-## 3.10. 단일 프로세스로 처리되는 Write-Through기반 CQRS - Kafka Connect
+
+## 3.10. 단일 프로세스로 처리되는 Trigger 기반 CQRS  - H2 Trigger 
 
 
 
 ### 3.10.1. 개요
-
-- 코드레벨에서 명령과 조회를 분리
-- 명령과 조회 모델의 데이타 일관성을 위해 솔루션을 통해 처리
-- 코드의 복잡도 감소
-  - 샘플의 경우 Event 처리를 위한 코드를 별도로 구상하였으나 일반적으로 DB to DB 직접 연동하는 형태로 활용
-- 향후 프로세스 분리 시 비용 감소
-- 솔루션 유지보수 비용 증가 및 솔루션 선택의 제약사항 발생
-- 데이타 일관성을 보장하지 않으므로 보정을 할 수 있는 별도 방안 고려 필요.
-
-
-
-### 3.10.2. 아키텍처 구성
-
-<img src="./assets/figure25.png" alt="image-20221110174323303" style="zoom:150%;" />
-
-### 3.10.3 Docker
-
-- 해당 실습을 위해 MySql, Kafka, Kafka Connect가 필요하므로 Docker-Compose 를 통해 구성한다.
-
-  - 파일명 : docker-compose.yaml
-
-    ```
-    version: '2'
-    services:
-      app:
-        build: .
-        ports:
-          - 8080:8080
-        links:
-          - mysql
-          - kafka
-      zookeeper:
-        image: debezium/zookeeper:0.8
-        ports:
-         - 2181:2181
-         - 2888:2888
-         - 3888:3888
-      kafka:
-        image: debezium/kafka:0.8
-        ports:
-         - 9092:9092
-        links:
-         - zookeeper
-        environment:
-         - ZOOKEEPER_CONNECT=zookeeper:2181
-         - ADVERTISED_LISTENERS=${ADVERTISED_LISTENERS}
-      mysql:
-        image: debezium/example-mysql:0.8
-        ports:
-         - 3306:3306
-        environment:
-         - MYSQL_ROOT_PASSWORD=debezium
-         - MYSQL_USER=mysqluser
-         - MYSQL_PASSWORD=mysqlpw
-        volumes:
-          - ./db/initdb.d:/docker-entrypoint-initdb.d     
-      connect:
-        image: debezium/connect-jdbc-es:0.8
-        build:
-          context: debezium-jdbc
-        ports:
-         - 8083:8083
-         - 5005:5005
-        links:
-         - kafka
-         - mysql
-        environment:
-         - BOOTSTRAP_SERVERS=kafka:9092
-         - GROUP_ID=1
-         - CONFIG_STORAGE_TOPIC=my_connect_configs
-         - OFFSET_STORAGE_TOPIC=my_connect_offsets
-    
-    ```
-
-    
-
-### 3.10.3. 실습
-
-- 패키지 구조
-
-  ```
-  ├─java
-  │  └─com
-  │      └─kt
-  │          └─cqrs
-  │              ├─command
-  │              │  ├─controller
-  │              │  ├─payload
-  │              │  ├─repository
-  │              │  │  └─entity
-  │              │  └─service
-  │              ├─event
-  │              │  └─message
-  │              └─query
-  │                  ├─controller
-  │                  ├─repository
-  │                  │  └─entity
-  │                  └─service
-  └─resources
-  ```
-
-- Docker
-
-  - 파일명 : Dockerfile
-  
-  ```
-  # Start with a base image containing Java runtime
-  FROM eclipse-temurin:17-jdk
-  
-  # Make port 8888 available to the world outside this container
-  EXPOSE 8080
-  
-  # The application's jar file
-  ARG JAR_FILE=target/service-write-through-0.0.1-SNAPSHOT.jar
-  
-  # Add the application's jar to the container
-  ADD ${JAR_FILE} service-write-through.jar
-  
-  # Run the jar file 
-  ENTRYPOINT ["java","-Djava.security.egd=file:/dev/./urandom","-jar","/with-log-tailing.jar"]
-  ```
-- Database
-
-  - 파일명 : 파일명: schema.sql
-
-  ```sql
-     CREATE TABLE IF NOT EXISTS CREDIT_CARD (
-        ID            VARCHAR(255) PRIMARY KEY,
-        INITIAL_LIMIT DECIMAL(18,2) NOT NULL,
-        USED_LIMIT    DECIMAL(18,2) NOT NULL
-      );
-      
-      CREATE TABLE IF NOT EXISTS WITHDRAWAL (
-        ID     VARCHAR(255) PRIMARY KEY,
-        CARD_ID   VARCHAR(255)    NOT NULL,
-        AMOUNT DECIMAL(18,2) NOT NULL
-      )
-  ```
-
-  - 파일명: data.sql
-
-  ```sql
-    INSERT INTO credit_card (ID, INITIAL_LIMIT, USED_LIMIT) VALUES
-      ('3a3e99f0-5ad9-47fa-961d-d75fab32ef0e', 10000, 0);
-    
-    COMMIT;
-  ```
-
-- Dependency
-  -  파일명 : pom.xml
-  ```xml
-  <?xml version="1.0" encoding="UTF-8"?>
-  <project xmlns="http://maven.apache.org/POM/4.0.0"
-  	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  	<modelVersion>4.0.0</modelVersion>
-  
-  	<groupId>icis.com</groupId>
-  	<artifactId>service-write-through</artifactId>
-  	<version>0.0.1-SNAPSHOT</version>
-  	<packaging>jar</packaging>
-  
-  	<parent>
-  		<groupId>org.springframework.boot</groupId>
-  		<artifactId>spring-boot-starter-parent</artifactId>
-  		<version>2.7.2</version>
-  		<relativePath /> <!-- lookup parent from repository -->
-  	</parent>
-  
-  	<properties>
-  		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-  		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-  		<java.version>17</java.version>
-  		<spring-cloud.version>2021.0.3</spring-cloud.version>
-  	</properties>
-  
-  	<dependencyManagement>
-  		<dependencies>
-  			<dependency>
-  				<groupId>org.springframework.cloud</groupId>
-  				<artifactId>spring-cloud-dependencies</artifactId>
-  				<version>${spring-cloud.version}</version>
-  				<type>pom</type>
-  				<scope>import</scope>
-  			</dependency>
-  		</dependencies>
-  	</dependencyManagement>
-  
-  	<build>
-  		<plugins>
-  			<plugin>
-  				<groupId>org.springframework.boot</groupId>
-  				<artifactId>spring-boot-maven-plugin</artifactId>
-  			</plugin>
-  		</plugins>
-  	</build>
-  
-  	<dependencies>
-  		<dependency>
-  			<groupId>org.springframework.boot</groupId>
-  			<artifactId>spring-boot-starter-data-jdbc</artifactId>
-  		</dependency>
-  		<dependency>
-  			<groupId>org.springframework.boot</groupId>
-  			<artifactId>spring-boot-starter-web</artifactId>
-  		</dependency>
-  		<dependency>
-  			<groupId>org.springframework.boot</groupId>
-  			<artifactId>spring-boot-starter-actuator</artifactId>
-  		</dependency>
-  		<dependency>
-  			<groupId>org.springframework.boot</groupId>
-  			<artifactId>spring-boot-configuration-processor</artifactId>
-  			<optional>true</optional>
-  		</dependency>
-  		<dependency>
-  			<groupId>org.springframework.boot</groupId>
-  			<artifactId>spring-boot-devtools</artifactId>
-  			<scope>runtime</scope>
-  			<optional>true</optional>
-  		</dependency>
-  		
-  		<dependency>
-  			<groupId>org.springframework.kafka</groupId>
-  			<artifactId>spring-kafka</artifactId>
-  		</dependency>
-  
-  		<dependency>
-  			<groupId>mysql</groupId>
-  			<artifactId>mysql-connector-java</artifactId>
-  		</dependency>
-  
-  		<dependency>
-  			<groupId>org.projectlombok</groupId>
-  			<artifactId>lombok</artifactId>
-  			<scope>provided</scope>
-  		</dependency>
-  
-  		<dependency>
-  			<groupId>org.springframework.boot</groupId>
-  			<artifactId>spring-boot-starter-test</artifactId>
-  			<scope>test</scope>
-  		</dependency>
-  
-  		<dependency>
-  			<groupId>junit</groupId>
-  			<artifactId>junit</artifactId>
-  			<scope>test</scope>
-  		</dependency>
-  		
-  		<dependency>
-  			<groupId>org.springdoc</groupId>
-  			<artifactId>springdoc-openapi-ui</artifactId>
-  			<version>1.6.6</version>
-  		</dependency>
-  		
-  		<dependency>
-  			<groupId>org.springframework.cloud</groupId>
-  			<artifactId>spring-cloud-stream-test-support</artifactId>
-  			<scope>test</scope>
-  		</dependency>
-  
-  	</dependencies>
-  </project>
-  
-  ```
-  
-- Properties
-  -  파일명 : resources/application.yml
-  ```yaml
-  server:
-    port: 8081
-    
-  spring:     
-    devtools:
-      restart:
-        enabled: true    
-    datasource:
-      url: jdbc:mysql://localhost:3306/inventory?autoReconnect=true&useSSL=false
-      username: mysqluser
-      password: mysqlpw
-        
-    kafka:
-      consumer:
-        bootstrap-servers:
-          - localhost:9092
-        group-id: inventory-event
-        auto-offset-reset: earliest
-        
-        key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-        value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      listener:      
-         ack-mode: MANUAL_IMMEDIATE
-      producer:
-        bootstrap-servers: localhost:9092    
-  
-  ```
-  
-- Bootstrap
-  -  파일명 : CqrsApplication.java
-  ```java
-  package com.kt.cqrs;
-  
-  import org.springframework.boot.SpringApplication;
-  import org.springframework.boot.autoconfigure.SpringBootApplication;
-  import org.springframework.kafka.annotation.EnableKafka;
-  import org.springframework.web.servlet.config.annotation.EnableWebMvc;
-  
-  @EnableWebMvc
-  @EnableKafka
-  @SpringBootApplication
-  public class CqrsApplication {
-  	
-  	public static void main(String[] args) {
-  		SpringApplication.run(CqrsApplication.class, args);
-  	}
-  
-  }
-  ```
-  
-- Exception
-
-  -  파일명 : NotEnoughMoneyException.java
-  
-  ```java
-  package com.kt.cqrs.command.service;
-  
-  public class NotEnoughMoneyException extends RuntimeException {
-  
-  	private static final long serialVersionUID = 1L;
-  	public NotEnoughMoneyException(String cardNo, long wanted, long availableBalance) {
-          super(String.format("Card %s not able to withdraw %s. Balance is %s", cardNo, wanted, availableBalance));
-      }
-  }
-  ```
-- event
-
-  - 파일명 : EventHandler.java
-
-  ```java
-  package com.kt.cqrs.event;
-  
-  import java.util.UUID;
-  
-  import org.springframework.kafka.annotation.KafkaListener;
-  import org.springframework.kafka.support.Acknowledgment;
-  import org.springframework.stereotype.Service;
-  
-  import com.fasterxml.jackson.core.JsonProcessingException;
-  import com.fasterxml.jackson.databind.ObjectMapper;
-  import com.kt.cqrs.event.message.Envelope;
-  import com.kt.cqrs.query.repository.WithdrawalRepository;
-  import com.kt.cqrs.query.repository.entity.Withdrawal;
-  
-  import lombok.RequiredArgsConstructor;
-  import lombok.extern.slf4j.Slf4j;
-  
-  @Service
-  @Slf4j
-  @RequiredArgsConstructor
-  class EventHandler {
-  
-  	private final WithdrawalRepository withdrawalRepository;
-  	
-  	@KafkaListener(topics="credit_card")
-  	public void handle(String kafkaMessage, Acknowledgment acknowledgment) {
-  		log.info("credit_card kafkaMessage = {}", kafkaMessage);
-  		ObjectMapper mapper = new ObjectMapper();
-  		Envelope message = null;
-  		try {
-  			message  = mapper.readValue(kafkaMessage, Envelope.class);
-  			log.info("message = {}", message);
-  		} catch (JsonProcessingException e) {
-  			e.printStackTrace();
-  		}
-  		
-  		if("u".equals(message.getPayload().getOp())) {
-  			saveWithdrawalFrom(message);
-  		}
-  	}
-  	
-  
-  	private void saveWithdrawalFrom(Envelope message) {
-  		String cardId = message.getPayload().getBefore().getId();
-  		long withdrawalAmount
-  				= balanceAfter(message) - balanceBefore(message);
-  		 withdrawalRepository.save(Withdrawal.newWithdrawal(UUID.randomUUID().toString(), withdrawalAmount, cardId));
-  	}
-  
-  	private long balanceAfter(Envelope message) {
-  		return message.getPayload().getAfter().getUsedLimit();
-  	}
-  
-  	private long balanceBefore(Envelope message) {
-  		return message.getPayload().getBefore().getUsedLimit();
-  	}
-  
-  
-  }
-  
-  ```
-
-  - **Kafka Connect에서 보내는 Topic 메세지를 받기위한 Java 클래스를 com.kt.cqrs.event.message 위치에 복사한다**.
-    - 다운로드 위치 : https://github.com/kirobo77/cqrs/sample/topicJava.zip
-
-- Command
-
-  - Entity
-
-    - 파일명 : CreditCard.java
-
-    ```java
-    package com.kt.cqrs.command.repository.entity;
-    
-    import org.springframework.data.annotation.Id;
-    import org.springframework.data.relational.core.mapping.Table;
-    import lombok.AllArgsConstructor;
-    import lombok.Builder;
-    import lombok.Getter;
-    import lombok.NoArgsConstructor;
-    import lombok.Setter;
-    import lombok.ToString;
-    
-    @Getter
-    @Setter
-    @Builder
-    @AllArgsConstructor
-    @NoArgsConstructor
-    @ToString
-    @Table("credit_card")
-    public class CreditCard {
-        @Id
-        private String id;
-        private long initialLimit;
-        private long usedLimit;
-    }
-    
-    ```
-    
-  - Rpository
-
-    - 파일명 : CreditCardRepository.java
-
-    ```java
-    package com.kt.cqrs.command.repository;
-    
-    import org.springframework.data.repository.CrudRepository;
-    import com.kt.cqrs.command.repository.entity.CreditCard;
-    
-    public interface CreditCardRepository extends CrudRepository<CreditCard, String> {
-    }
-    
-    ```
-    
-  - Service
-
-    -  파일명 : WithdrawalCommandService.java
-
-    ```java
-    package com.kt.cqrs.command.service;
-    
-    import org.springframework.stereotype.Service;
-    import org.springframework.transaction.annotation.Transactional;
-    import com.kt.cqrs.command.repository.CreditCardRepository;
-    import com.kt.cqrs.command.repository.entity.CreditCard;
-    import lombok.RequiredArgsConstructor;
-    import lombok.extern.slf4j.Slf4j;
-    
-    
-    @Slf4j
-    @Service
-    @RequiredArgsConstructor
-    public class WithdrawalCommandService {
-    
-        private final CreditCardRepository creditCardRepository;
-    
-        @Transactional
-        public void withdraw(String cardId, long amount) {
-        	log.info("cardId = {}",cardId.toString());
-            CreditCard creditCard = creditCardRepository.findById(cardId)
-                    .orElseThrow(() -> new IllegalStateException("Cannot find card with id " + cardId));
-            withdraw(creditCard, amount);
-        }
-        
-        public void withdraw(CreditCard creditCard, long amount) {
-    		if (thereIsMoneyToWithdraw(creditCard, amount)) {
-    			creditCard.setUsedLimit(creditCard.getUsedLimit() + amount);
-    			log.info("creditCard = {}", creditCard);
-    			creditCardRepository.save(creditCard);
-    		} else {
-    			throw new NotEnoughMoneyException(creditCard.getId(), amount, availableBalance(creditCard));
-    		}
-    	}
-    
-    	public long availableBalance(CreditCard creditCard) {
-    		return creditCard.getInitialLimit() - creditCard.getUsedLimit();
-    	}
-    
-    	private boolean thereIsMoneyToWithdraw(CreditCard creditCard, long amount) {
-    		return availableBalance(creditCard) >= amount;
-    	}
-    
-    }
-    
-    ```
-    
-  - Payload
-
-    - 파일명 : WithdrawalCommand.java
-
-    ```java
-    package com.kt.cqrs.command.payload;
-    
-    import lombok.AllArgsConstructor;
-    import lombok.Data;
-    import lombok.NoArgsConstructor;
-    
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public class WithdrawalCommand {
-        private String card;
-        private long amount;
-    }
-    ```
-    
-  - Controller
-
-    - 파일명 : WithdrawalCommandController.java
-
-    ```java
-    package com.kt.cqrs.command.controller;
-    
-    import org.springframework.http.ResponseEntity;
-    import org.springframework.web.bind.annotation.PostMapping;
-    import org.springframework.web.bind.annotation.RequestBody;
-    import org.springframework.web.bind.annotation.RequestMapping;
-    import org.springframework.web.bind.annotation.RestController;
-    import com.kt.cqrs.command.payload.WithdrawalCommand;
-    import com.kt.cqrs.command.service.WithdrawalCommandService;
-    
-    import lombok.RequiredArgsConstructor;
-    
-    @RestController
-    @RequestMapping("/withdrawal")
-    @RequiredArgsConstructor
-    class WithdrawalCommandController {
-    
-    	private final WithdrawalCommandService withdrawalCommandService;
-    
-    	@PostMapping
-    	ResponseEntity<?> withdraw(@RequestBody WithdrawalCommand withdrawalCommand) {
-    		withdrawalCommandService.withdraw(withdrawalCommand.getCard(), withdrawalCommand.getAmount());
-    		return ResponseEntity.ok().build();
-    	}
-    
-    }
-    
-    ```
-
-  
-
-- Query
-
-  - Entity
-
-    - 파일명 : Withdrawal.java
-
-    ```java
-  package com.kt.cqrs.query.repository.entity;
-    
-    import org.springframework.data.annotation.Id;
-    import org.springframework.data.annotation.Transient;
-    import org.springframework.data.domain.Persistable;
-    import org.springframework.data.relational.core.mapping.Table;
-    
-    import lombok.AllArgsConstructor;
-    import lombok.Builder;
-    import lombok.Getter;
-    import lombok.NoArgsConstructor;
-    import lombok.Setter;
-    import lombok.ToString;
-    
-    @Getter
-    @Setter
-    @Builder
-    @AllArgsConstructor
-    @NoArgsConstructor
-    @ToString
-    @Table("withdrawal")
-    public class Withdrawal implements Persistable<String>{
-    
-        @Transient
-        private boolean isNew = false;
-        
-        @Id
-        private String id;
-        private long amount;
-        private String cardId;
-        
-        public static Withdrawal newWithdrawal(String id, long amount, String cardId) {
-        	Withdrawal withdrawal = new Withdrawal(true, id, amount, cardId);
-            return withdrawal;
-        }
-    
-        @Override
-        public boolean isNew() {
-            return isNew;
-        }
-    
-    }
-    
-    ```
-    
-  - Repository
-  
-    -  파일명 : WithdrawalRepository.java
-  
-    ```java
-    
-    
-    package com.kt.cqrs.query.repository;
-    
-    import java.util.List;
-    
-    import org.springframework.data.repository.CrudRepository;
-    
-    import com.kt.cqrs.query.repository.entity.Withdrawal;
-    
-    public interface WithdrawalRepository extends CrudRepository<Withdrawal, String> {
-    
-        List<Withdrawal> findByCardId(String cardId);
-    }
-    ```
-  
-  - Service
-  
-    - 파일명 : WithdrawalQueryService.java
-  
-    ```java
-    
-    package com.kt.cqrs.query.service;
-    
-    import java.util.List;
-    
-    import org.springframework.stereotype.Service;
-    
-    import com.kt.cqrs.query.repository.WithdrawalRepository;
-    import com.kt.cqrs.query.repository.entity.Withdrawal;
-    
-    import lombok.RequiredArgsConstructor;
-    import lombok.extern.slf4j.Slf4j;
-    
-    
-    @Slf4j
-    @Service
-    @RequiredArgsConstructor
-    public class WithdrawalQueryService {
-    
-        private final WithdrawalRepository withdrawalRepository;
-    
-    	public List<Withdrawal> withdraw(String cardId) {
-    		return withdrawalRepository.findByCardId(cardId);
-    	}
-    
-    }
-    
-    ```
-  
-  - Controller
-  
-    - 파일명 : WithdrawalQueryController.java
-  
-    ```java
-    package com.kt.cqrs.query.controller;
-    
-    import java.util.List;
-    
-    import javax.websocket.server.PathParam;
-    
-    import org.springframework.http.ResponseEntity;
-    import org.springframework.web.bind.annotation.GetMapping;
-    import org.springframework.web.bind.annotation.RequestMapping;
-    import org.springframework.web.bind.annotation.RestController;
-    
-    import com.kt.cqrs.query.repository.entity.Withdrawal;
-    import com.kt.cqrs.query.service.WithdrawalQueryService;
-    
-    import lombok.RequiredArgsConstructor;
-    
-    @RestController
-    @RequestMapping("/withdrawal")
-    @RequiredArgsConstructor
-    class WithdrawalQueryController {
-    
-    	private final WithdrawalQueryService withdrawalQueryService;
-    
-    	@GetMapping
-    	ResponseEntity<List<Withdrawal>> withdrawals(@PathParam("cardId") String cardId) {
-    		return ResponseEntity.ok().body(withdrawalQueryService.withdraw(cardId));
-    	}
-    }
-    
-    ```
-### 3.10.4. 테스트
-
-- Docker Compose 실행
-
-```shell
-docker-compose up --build
-```
-
-- Kafka Connect 생성
-
-```shell
-curl localhost:8080/withdrawals -X POST --header 'Content-Type: application/json' -d '{"card":"3a3e99f0-5ad9-47fa-961d-d75fab32ef0e", "amount": 10.00}' --verbose
-```
-
-- 카드인출(명령)
-
-```
-curl localhost:8080/withdrawal -X POST --header 'Content-Type: application/json' -d '{"card":"3a3e99f0-5ad9-47fa-961d-d75fab32ef0e", "amount": 10.00}' --verbose
-```
-
-- 쿼리로 확인:
-
-```shell
-curl http://localhost:8080/withdrawal?cardId=3a3e99f0-5ad9-47fa-961d-d75fab32ef0e --verbose
-```
-
-- 예상 결과:
-
-```shell
-[{"amount":10.00}]
-```
-
-
-
-## 3.11. 단일 프로세스로 처리되는 Trigger 기반 CQRS  - H2Trigger 
-
-
-
-### 3.11.1. 개요
 
 - 코드레벨에서 명령과 조회를 분리
 - 명령과 조회 모델의 데이타 일관성을 위해 Database 기능을 통해 처리
@@ -4558,11 +3846,11 @@ curl http://localhost:8080/withdrawal?cardId=3a3e99f0-5ad9-47fa-961d-d75fab32ef0
 - 솔루션 유지보수 비용 증가 및 솔루션 선택의 제약사항 발생
 - 데이타 일관성을 보장하지 않으므로 보정을 할 수 있는 별도 방안 고려 필요.
 
-### 3.11.2. 아키텍처 구성
+### 3.10.2. 아키텍처 구성
 
 <img src="./assets/figure26.png" alt="image-20221110163657186" style="zoom:150%;" />
 
-### 3.11.3 실습
+### 3.10.3 실습
 
 - 패키지 구조
 
@@ -5112,7 +4400,7 @@ curl http://localhost:8080/withdrawal?cardId=3a3e99f0-5ad9-47fa-961d-d75fab32ef0
         }
     }
     ```
-### 3.11.4. 테스트
+### 3.10.4. 테스트
 
 - 키드인출(명령)
 
@@ -5132,11 +4420,17 @@ curl http://localhost:8080/withdrawal?cardId=3a3e99f0-5ad9-47fa-961d-d75fab32ef0
 [{"amount":10.00}]
 ```
 
+- 데이터 확인
+
+```http
+http://localhost:8080/h2-console/
+```
 
 
-## 3.12. 분리된 프로세스로 처리되는 이벤트 기반 CQRS  - Kafka
 
-### 3.12.1. 개요
+## 3.11. 분리된 프로세스로 처리되는 이벤트 기반 CQRS  - Kafka
+
+### 3.11.1. 개요
 
 - 다른 프로세스 명령과 조회를 분리
 - 확장성과 가용성 향상
@@ -5146,35 +4440,25 @@ curl http://localhost:8080/withdrawal?cardId=3a3e99f0-5ad9-47fa-961d-d75fab32ef0
 - 솔루션 유지보수 비용 증가 및 솔루션 선택의 제약사항 발생
 - 데이타 일관성을 보장하지 않으므로 보정을 할 수 있는 별도 방안 고려 필요.
 
-### 3.12.2. 아키텍처 구성
+### 3.11.2. 아키텍처 구성
 
 <img src="./assets/figure27.png" alt="image-20221110174502722" style="zoom:150%;" />
 
-### 3.12.3. 실습 - Docker 환경 구성
+### 3.11.3. 실습 - Docker 환경 구성
 
 - 해당 실습은 Docker 기반에서 진행하므로 사전에 Docker 파일과 Docker Compose 파일을 준비한다.
   - 파일명 : docker-compose
 
     ```yaml
-    version: "3.1"
-    
-    ```
-  
-  services:
-      command:
-        build: ./service-db-event-command
+    version: '2'
+    services:
+      app:
+        build: .
         ports:
           - 8080:8080
         links:
+          - mysql
           - kafka
-  
-      query:
-        build: ./service-db-event-query
-        ports:
-          - 8888:8888
-        links:
-          - kafka
-        
       zookeeper:
         image: debezium/zookeeper:0.8
         ports:
@@ -5190,15 +4474,72 @@ curl http://localhost:8080/withdrawal?cardId=3a3e99f0-5ad9-47fa-961d-d75fab32ef0
         environment:
          - ZOOKEEPER_CONNECT=zookeeper:2181
          - ADVERTISED_LISTENERS=PLAINTEXT://host.docker.internal:9092
-         - KAFKA_CREATE_TOPICS=domain-event 
+    mysql:
+        image: debezium/example-mysql:0.8
+        ports:
+         - 3306:3306
+        environment:
+         - MYSQL_ROOT_PASSWORD=debezium
+         - MYSQL_USER=mysqluser
+         - MYSQL_PASSWORD=mysqlpw
+        volumes:
+          - ./initdb.d:/docker-entrypoint-initdb.d     
+      connect:
+        image: debezium/connect-jdbc-es:0.8
+        build:
+          context: debezium-jdbc
+        ports:
+         - 8083:8083
+         - 5005:5005
+        links:
+         - kafka
+         - mysql
+        environment:
+         - BOOTSTRAP_SERVERS=kafka:9092
+         - GROUP_ID=1
+         - CONFIG_STORAGE_TOPIC=my_connect_configs
+         - OFFSET_STORAGE_TOPIC=my_connect_offsets
+    
+    ```
+    
+  - 파일명 : initdb.d
   
+    ```sql
+    CREATE DATABASE inventory;
+    
+    USE inventory;
+    
+    drop user 'mysqluser'@'%';
+    
+    flush privileges;
+    
+    create user mysqluser@'%' identified by 'mysqlpw'; 
+    
+    grant all privileges on *.* to 'mysqluser'@'%' identified by 'mysqlpw' with grant option;
+    
+    flush privileges;  
+     
+    CREATE TABLE IF NOT EXISTS credit_card (
+      id            CHAR(36),
+      initial_limit INT NOT NULL,
+      used_limit    INT NOT NULL,
+      PRIMARY KEY (ID)
+    );
+    
+    CREATE TABLE IF NOT EXISTS withdrawal (
+      id    CHAR(36) PRIMARY KEY,
+      card_id   CHAR(36)    NOT NULL,
+      amount INT NOT NULL
+    );
+    
+    INSERT IGNORE INTO inventory.credit_card (ID, INITIAL_LIMIT, USED_LIMIT) VALUES  ('3a3e99f0-5ad9-47fa-961d-d75fab32ef0e', 10000, 0);
+    
+    COMMIT;
     ```
   
-  
-  
-    ```
+    
 
-### 3.12.4. 실습 - 명령 서비스
+### 3.11.4. 실습 - 명령 서비스
 
 - 패키지 구조
 
@@ -5855,7 +5196,7 @@ curl http://localhost:8080/withdrawal?cardId=3a3e99f0-5ad9-47fa-961d-d75fab32ef0
     
 
 
-### 3.12.5. 실습 - 조회 서비스
+### 3.11.5. 실습 - 조회 서비스
 
 - 패키지 구성
   
@@ -6296,7 +5637,7 @@ curl http://localhost:8080/withdrawal?cardId=3a3e99f0-5ad9-47fa-961d-d75fab32ef0
 
   
 
-### 3.12.6. 테스트
+### 3.11.6. 테스트
 
 - Docker Compose 실행
 
@@ -6320,6 +5661,968 @@ curl http://localhost:8080/withdrawal?cardId=3a3e99f0-5ad9-47fa-961d-d75fab32ef0
 
 ```
 [{"amount":10.00}]
+```
+
+
+
+## 3.12. 분리된 프로세스로 처리되는 CDC 기반 CQRS - Kafka Connect
+
+
+
+### 3.12.1. 개요
+
+- 명령과 조회가 프로세스로 분리
+- 명령과 조회 모델의 데이타 일관성 솔루션을 통해 처리(CDC)
+- 가용성 및 성능 장점 
+  - 부하가 발생하는 서비스의 스케일 아웃이 가능함
+  - 조회 서비스에 Cache 등 을 활용한 성능향상 가능
+- 코드의 복잡도 감소
+  - 샘플의 경우 Event 처리를 위한 코드를 별도로 구상하였으나 일반적으로 DB to DB 직접 연동하는 형태로 활용
+- 솔루션 유지보수 비용 증가 및 솔루션 선택의 제약사항 발생
+- 데이타 일관성을 보장하지 않으므로 보정을 할 수 있는 별도 방안 고려 필요.
+
+
+
+### 3.12.2. 아키텍처 구성
+
+figure25
+
+### 3.12.3. 실습 - Docker 환경 구성
+
+- 해당 실습을 위해 MySql, Kafka, Kafka Connect가 필요하므로 Docker-Compose 를 통해 구성한다.
+  - 파일명 : docker-compose.yaml
+
+  ```
+  version: '2'
+  services:
+    command:
+      build: ./service-db-cdc-command
+      ports:
+        - 8080:8080
+      links:
+        - mysql    
+    query:
+      build: ./service-db-cdc-query
+      ports:
+        - 8888:8888
+      links:
+        - kafka    
+    zookeeper:
+      image: debezium/zookeeper:0.8
+      ports:
+       - 2181:2181
+       - 2888:2888
+       - 3888:3888
+    kafka:
+      image: debezium/kafka:0.8
+      ports:
+       - 9092:9092
+      links:
+       - zookeeper
+      environment:
+       - ZOOKEEPER_CONNECT=zookeeper:2181
+       - ADVERTISED_LISTENERS=PLAINTEXT://host.docker.internal:9092
+    mysql:
+      image: debezium/example-mysql:0.8
+      ports:
+       - 3306:3306
+      environment:
+       - MYSQL_ROOT_PASSWORD=debezium
+       - MYSQL_USER=mysqluser
+       - MYSQL_PASSWORD=mysqlpw
+      volumes:
+        - ./db/initdb.d:/docker-entrypoint-initdb.d     
+    connect:
+      image: debezium/connect-jdbc-es:0.8
+      build:
+        context: debezium-jdbc
+      ports:
+       - 8083:8083
+       - 5005:5005
+      links:
+       - kafka
+       - mysql
+      environment:
+       - BOOTSTRAP_SERVERS=kafka:9092
+       - GROUP_ID=1
+       - CONFIG_STORAGE_TOPIC=my_connect_configs
+       - OFFSET_STORAGE_TOPIC=my_connect_offsets
+  
+  ```
+
+  - MySql 테이블 생성 및 Kafka Connect 생성정보는 아래 위치에서 다운로드 한다.
+    - 다운로드 위치 : https://github.com/kirobo77/cqrs/sample/service-db-cdc.zip
+
+### 3.10.3. 실습 - 명령서비스
+
+- 패키지 구조
+
+  ```
+  ├─java
+  │  └─com
+  │      └─kt
+  │          └─cqrs
+  │              └─command
+  │                  ├─controller
+  │                  ├─payload
+  │                  ├─repository
+  │                  │  └─entity
+  │                  └─service
+  └─resources
+  ```
+
+- Docker
+
+  - 파일명 : Dockerfile
+
+  ```
+  # Start with a base image containing Java runtime
+  FROM eclipse-temurin:17-jdk
+  
+  # Make port 8080 available to the world outside this container
+  EXPOSE 8080
+  
+  # The application's jar file
+  ARG JAR_FILE=target/service-db-cdc-command-0.0.1-SNAPSHOT.jar
+  
+  # Add the application's jar to the container
+  ADD ${JAR_FILE} service-db-cdc-command.jar
+  
+  # Run the jar file 
+  ENTRYPOINT ["java","-Djava.security.egd=file:/dev/./urandom","-jar","/service-db-cdc-command.jar"]
+  ```
+
+- Dependency
+
+  -  파일명 : pom.xml
+
+  ```xml
+  <?xml version="1.0" encoding="UTF-8"?>
+  <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+      <modelVersion>4.0.0</modelVersion>
+  
+      <groupId>com.kt.cqrs</groupId>
+      <artifactId>service-db-cdc-command</artifactId>
+      <version>0.0.1-SNAPSHOT</version>
+      <packaging>jar</packaging>
+  
+      <parent>
+          <groupId>org.springframework.boot</groupId>
+          <artifactId>spring-boot-starter-parent</artifactId>
+          <version>2.7.2</version>
+          <relativePath/> <!-- lookup parent from repository -->
+      </parent>
+  
+      <properties>
+          <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+          <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+          <java.version>17</java.version>
+          <spring-cloud.version>2021.0.3</spring-cloud.version>
+      </properties>
+  
+      <dependencyManagement>
+          <dependencies>
+              <dependency>
+                  <groupId>org.springframework.cloud</groupId>
+                  <artifactId>spring-cloud-dependencies</artifactId>
+                  <version>${spring-cloud.version}</version>
+                  <type>pom</type>
+                  <scope>import</scope>
+              </dependency>
+          </dependencies>
+      </dependencyManagement>
+  
+      <build>
+          <plugins>
+              <plugin>
+                  <groupId>org.springframework.boot</groupId>
+                  <artifactId>spring-boot-maven-plugin</artifactId>
+              </plugin>
+          </plugins>
+      </build>
+  
+  
+      <dependencies>
+          <dependency>
+              <groupId>org.springframework.boot</groupId>
+              <artifactId>spring-boot-starter-data-jdbc</artifactId>
+          </dependency>
+          <dependency>
+              <groupId>org.springframework.boot</groupId>
+              <artifactId>spring-boot-starter-web</artifactId>
+          </dependency>
+  		<dependency>
+  			<groupId>org.springframework.boot</groupId>
+  			<artifactId>spring-boot-configuration-processor</artifactId>
+  			<optional>true</optional>
+  		</dependency>        
+          <dependency>
+              <groupId>org.springframework.boot</groupId>
+              <artifactId>spring-boot-starter-actuator</artifactId>
+          </dependency>
+  
+  		<dependency>
+  			<groupId>mysql</groupId>
+  			<artifactId>mysql-connector-java</artifactId>
+  		</dependency>
+  
+  		<dependency>
+  			<groupId>org.projectlombok</groupId>
+  			<artifactId>lombok</artifactId>
+  			<scope>provided</scope>
+  		</dependency>
+  		
+  		<dependency>
+  			<groupId>org.springframework.boot</groupId>
+  			<artifactId>spring-boot-devtools</artifactId>
+  			<scope>runtime</scope>
+  			<optional>true</optional>
+  		</dependency>
+  		
+  		<dependency>
+  			<groupId>org.springframework.kafka</groupId>
+  			<artifactId>spring-kafka</artifactId>
+  		</dependency>		
+  
+  		<dependency>
+  			<groupId>org.springframework.boot</groupId>
+  			<artifactId>spring-boot-starter-test</artifactId>
+  			<scope>test</scope>
+  		</dependency>
+  
+  		<dependency>
+  			<groupId>junit</groupId>
+  			<artifactId>junit</artifactId>
+  			<scope>test</scope>
+  		</dependency>
+  		
+  		<dependency>
+  			<groupId>org.springdoc</groupId>
+  			<artifactId>springdoc-openapi-ui</artifactId>
+  			<version>1.6.6</version>
+  		</dependency>
+  
+      </dependencies>
+  
+  </project>
+  
+  ```
+
+- Properties
+
+  -  파일명 : resources/application.yml
+
+  ```yaml
+  server:
+    port: 8080
+    
+  spring:     
+    devtools:
+      restart:
+        enabled: true
+    datasource:
+      url: jdbc:mysql://mysql:3306/inventory?autoReconnect=true&useSSL=false
+      username: mysqluser
+      password: mysqlpw
+        
+    kafka:
+      bootstrap-servers:
+      - kafka:9092  
+      consumer:
+        group-id: inventory-event
+        auto-offset-reset: earliest
+        key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+        value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      listener:      
+         ack-mode: MANUAL_IMMEDIATE
+  
+   
+  ```
+
+- Bootstrap
+
+  -  파일명 : CqrsApplication.java
+
+  ```java
+  package com.kt.cqrs.command;
+  
+  import org.springframework.boot.SpringApplication;
+  import org.springframework.boot.autoconfigure.SpringBootApplication;
+  import org.springframework.kafka.annotation.EnableKafka;
+  import org.springframework.scheduling.annotation.EnableScheduling;
+  import org.springframework.web.servlet.config.annotation.EnableWebMvc;
+  
+  @EnableWebMvc
+  @EnableKafka
+  @SpringBootApplication
+  @EnableScheduling
+  public class CqrsApplication {
+  
+  	public static void main(String[] args) {
+  		SpringApplication.run(CqrsApplication.class, args);
+  	}
+  }
+  
+  ```
+
+- Entity
+
+  - 파일명 : CreditCard.java
+
+  ```java
+  package com.kt.cqrs.command.repository.entity;
+  
+  import org.springframework.data.annotation.Id;
+  import org.springframework.data.relational.core.mapping.Table;
+  import lombok.AllArgsConstructor;
+  import lombok.Builder;
+  import lombok.Getter;
+  import lombok.NoArgsConstructor;
+  import lombok.Setter;
+  import lombok.ToString;
+  
+  @Getter
+  @Setter
+  @Builder
+  @AllArgsConstructor
+  @NoArgsConstructor
+  @ToString
+  @Table("credit_card")
+  public class CreditCard {
+      @Id
+      private String id;
+      private long initialLimit;
+      private long usedLimit;
+  }
+  
+  ```
+
+- Rpository
+
+  - 파일명 : CreditCardRepository.java
+
+  ```java
+  package com.kt.cqrs.command.repository;
+  
+  import org.springframework.data.repository.CrudRepository;
+  import com.kt.cqrs.command.repository.entity.CreditCard;
+  
+  public interface CreditCardRepository extends CrudRepository<CreditCard, String> {
+  }
+  
+  ```
+
+- Service
+
+  -  파일명 : WithdrawalService.java
+
+  ```java
+  package com.kt.cqrs.command.service;
+  
+  import org.springframework.stereotype.Service;
+  import org.springframework.transaction.annotation.Transactional;
+  
+  import com.kt.cqrs.command.repository.CreditCardRepository;
+  import com.kt.cqrs.command.repository.entity.CreditCard;
+  
+  import lombok.RequiredArgsConstructor;
+  import lombok.extern.slf4j.Slf4j;
+  
+  @Slf4j
+  @Service
+  @RequiredArgsConstructor
+  public class WithdrawalService {
+  
+      private final CreditCardRepository creditCardRepository;
+  
+      @Transactional
+      public void withdraw(String cardId, long amount) {
+          CreditCard creditCard = creditCardRepository.findById(cardId)
+                  .orElseThrow(() -> new IllegalStateException("Cannot find card with id " + cardId));
+          withdraw(creditCard, amount);
+      }
+      
+  
+      public void withdraw(CreditCard creditCard, long amount) {
+          if (thereIsMoneyToWithdraw(creditCard, amount)) {
+          	creditCard.setUsedLimit(creditCard.getUsedLimit() + amount);
+  			log.info("creditCard = {}", creditCard);
+  			creditCardRepository.save(creditCard);
+          } else {
+              throw new NotEnoughMoneyException(creditCard.getId(), amount, availableBalance(creditCard));
+          }
+      }
+  
+      public long chargeBack(CreditCard creditCard, long amount) {
+          return creditCard.getUsedLimit() - amount;
+      }
+  
+      public long availableBalance(CreditCard creditCard) {
+          return creditCard.getInitialLimit() - creditCard.getUsedLimit();
+      }
+  
+      private boolean thereIsMoneyToWithdraw(CreditCard creditCard, long amount) {
+          return availableBalance(creditCard) >= amount;
+      }
+  
+  }
+  
+  ```
+
+- Exception
+
+  -  파일명 : NotEnoughMoneyException.java
+
+  ```java
+  package com.kt.cqrs.command.service;
+  
+  public class NotEnoughMoneyException extends RuntimeException {
+  
+  	private static final long serialVersionUID = 1L;
+  
+  	public NotEnoughMoneyException(String cardNo, long wanted, long availableBalance) {
+          super(String.format("Card %s not able to withdraw %s. Balance is %s", cardNo, wanted, availableBalance));
+      }
+  
+  
+  }
+  
+  ```
+
+- Payload
+
+  - 파일명 : WithdrawalCommand.java
+
+  ```java
+  package com.kt.cqrs.command.payload;
+  
+  import lombok.AllArgsConstructor;
+  import lombok.Data;
+  import lombok.NoArgsConstructor;
+  
+  @Data
+  @NoArgsConstructor
+  @AllArgsConstructor
+  public class WithdrawalCommand {
+      private String card;
+      private long amount;
+  }
+  ```
+
+- Controller
+
+  - 파일명 : WithdrawalCommandController.java
+
+  ```java
+  package com.kt.cqrs.command.controller;
+  
+  import org.springframework.http.ResponseEntity;
+  import org.springframework.web.bind.annotation.PostMapping;
+  import org.springframework.web.bind.annotation.RequestBody;
+  import org.springframework.web.bind.annotation.RequestMapping;
+  import org.springframework.web.bind.annotation.RestController;
+  import com.kt.cqrs.command.payload.WithdrawalCommand;
+  import com.kt.cqrs.command.service.WithdrawalCommandService;
+  
+  import lombok.RequiredArgsConstructor;
+  
+  @RestController
+  @RequestMapping("/withdrawal")
+  @RequiredArgsConstructor
+  class WithdrawalCommandController {
+  
+  	private final WithdrawalCommandService withdrawalCommandService;
+  
+  	@PostMapping
+  	ResponseEntity<?> withdraw(@RequestBody WithdrawalCommand withdrawalCommand) {
+  		withdrawalCommandService.withdraw(withdrawalCommand.getCard(), withdrawalCommand.getAmount());
+  		return ResponseEntity.ok().build();
+  	}
+  
+  }
+  
+  ```
+
+
+
+### 3.10.3. 실습 - 조회서비스
+
+- 패키지 구조
+
+  ```
+  ├─java
+  │  └─com
+  │      └─kt
+  │          └─cqrs
+  │              └─command
+  │                  ├─controller
+  │                  ├─payload
+  │                  ├─repository
+  │                  │  └─entity
+  │                  └─service
+  └─resources
+  ```
+
+- Docker
+
+  - 파일명 : Dockerfile
+
+  ```
+  # Start with a base image containing Java runtime
+  FROM eclipse-temurin:17-jdk
+  
+  # Make port 8080 available to the world outside this container
+  EXPOSE 8080
+  
+  # The application's jar file
+  ARG JAR_FILE=target/service-db-cdc-command-0.0.1-SNAPSHOT.jar
+  
+  # Add the application's jar to the container
+  ADD ${JAR_FILE} service-db-cdc-command.jar
+  
+  # Run the jar file 
+  ENTRYPOINT ["java","-Djava.security.egd=file:/dev/./urandom","-jar","/service-db-cdc-command.jar"]
+  ```
+
+- Dependency
+
+  -  파일명 : pom.xml
+
+  ```xml
+  <?xml version="1.0" encoding="UTF-8"?>
+  <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+      <modelVersion>4.0.0</modelVersion>
+  
+      <groupId>com.kt.cqrs</groupId>
+      <artifactId>service-db-cdc-command</artifactId>
+      <version>0.0.1-SNAPSHOT</version>
+      <packaging>jar</packaging>
+  
+      <parent>
+          <groupId>org.springframework.boot</groupId>
+          <artifactId>spring-boot-starter-parent</artifactId>
+          <version>2.7.2</version>
+          <relativePath/> <!-- lookup parent from repository -->
+      </parent>
+  
+      <properties>
+          <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+          <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+          <java.version>17</java.version>
+          <spring-cloud.version>2021.0.3</spring-cloud.version>
+      </properties>
+  
+      <dependencyManagement>
+          <dependencies>
+              <dependency>
+                  <groupId>org.springframework.cloud</groupId>
+                  <artifactId>spring-cloud-dependencies</artifactId>
+                  <version>${spring-cloud.version}</version>
+                  <type>pom</type>
+                  <scope>import</scope>
+              </dependency>
+          </dependencies>
+      </dependencyManagement>
+  
+      <build>
+          <plugins>
+              <plugin>
+                  <groupId>org.springframework.boot</groupId>
+                  <artifactId>spring-boot-maven-plugin</artifactId>
+              </plugin>
+          </plugins>
+      </build>
+  
+  
+      <dependencies>
+          <dependency>
+              <groupId>org.springframework.boot</groupId>
+              <artifactId>spring-boot-starter-data-jdbc</artifactId>
+          </dependency>
+          <dependency>
+              <groupId>org.springframework.boot</groupId>
+              <artifactId>spring-boot-starter-web</artifactId>
+          </dependency>
+  		<dependency>
+  			<groupId>org.springframework.boot</groupId>
+  			<artifactId>spring-boot-configuration-processor</artifactId>
+  			<optional>true</optional>
+  		</dependency>        
+          <dependency>
+              <groupId>org.springframework.boot</groupId>
+              <artifactId>spring-boot-starter-actuator</artifactId>
+          </dependency>
+  
+  		<dependency>
+  			<groupId>mysql</groupId>
+  			<artifactId>mysql-connector-java</artifactId>
+  		</dependency>
+  
+  		<dependency>
+  			<groupId>org.projectlombok</groupId>
+  			<artifactId>lombok</artifactId>
+  			<scope>provided</scope>
+  		</dependency>
+  		
+  		<dependency>
+  			<groupId>org.springframework.boot</groupId>
+  			<artifactId>spring-boot-devtools</artifactId>
+  			<scope>runtime</scope>
+  			<optional>true</optional>
+  		</dependency>
+  		
+  		<dependency>
+  			<groupId>org.springframework.kafka</groupId>
+  			<artifactId>spring-kafka</artifactId>
+  		</dependency>		
+  
+  		<dependency>
+  			<groupId>org.springframework.boot</groupId>
+  			<artifactId>spring-boot-starter-test</artifactId>
+  			<scope>test</scope>
+  		</dependency>
+  
+  		<dependency>
+  			<groupId>junit</groupId>
+  			<artifactId>junit</artifactId>
+  			<scope>test</scope>
+  		</dependency>
+  		
+  		<dependency>
+  			<groupId>org.springdoc</groupId>
+  			<artifactId>springdoc-openapi-ui</artifactId>
+  			<version>1.6.6</version>
+  		</dependency>
+  
+      </dependencies>
+  
+  </project>
+  
+  ```
+
+- Properties
+
+  -  파일명 : resources/application.yml
+
+  ```yaml
+  server:
+    port: 8080
+    
+  spring:     
+    devtools:
+      restart:
+        enabled: true
+    datasource:
+      url: jdbc:mysql://mysql:3306/inventory?autoReconnect=true&useSSL=false
+      username: mysqluser
+      password: mysqlpw
+        
+    kafka:
+      bootstrap-servers:
+      - kafka:9092  
+      consumer:
+        group-id: inventory-event
+        auto-offset-reset: earliest
+        key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+        value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      listener:      
+         ack-mode: MANUAL_IMMEDIATE
+  
+   
+  ```
+
+- Bootstrap
+
+  -  파일명 : CqrsApplication.java
+
+  ```java
+  package com.kt.cqrs.command;
+  
+  import org.springframework.boot.SpringApplication;
+  import org.springframework.boot.autoconfigure.SpringBootApplication;
+  import org.springframework.kafka.annotation.EnableKafka;
+  import org.springframework.scheduling.annotation.EnableScheduling;
+  import org.springframework.web.servlet.config.annotation.EnableWebMvc;
+  
+  @EnableWebMvc
+  @EnableKafka
+  @SpringBootApplication
+  @EnableScheduling
+  public class CqrsApplication {
+  
+  	public static void main(String[] args) {
+  		SpringApplication.run(CqrsApplication.class, args);
+  	}
+  }
+  
+  ```
+
+- Event
+
+  - 파일명 : EventHandler.java
+
+  ```java
+  package com.kt.cqrs.event;
+  
+  import java.util.UUID;
+  
+  import org.springframework.kafka.annotation.KafkaListener;
+  import org.springframework.kafka.support.Acknowledgment;
+  import org.springframework.stereotype.Service;
+  
+  import com.fasterxml.jackson.core.JsonProcessingException;
+  import com.fasterxml.jackson.databind.ObjectMapper;
+  import com.kt.cqrs.event.message.Envelope;
+  import com.kt.cqrs.query.repository.WithdrawalRepository;
+  import com.kt.cqrs.query.repository.entity.Withdrawal;
+  
+  import lombok.RequiredArgsConstructor;
+  import lombok.extern.slf4j.Slf4j;
+  
+  @Service
+  @Slf4j
+  @RequiredArgsConstructor
+  class EventHandler {
+  
+  	private final WithdrawalRepository withdrawalRepository;
+  	
+  	@KafkaListener(topics="credit_card")
+  	public void handle(String kafkaMessage, Acknowledgment acknowledgment) {
+  		log.info("credit_card kafkaMessage = {}", kafkaMessage);
+  		ObjectMapper mapper = new ObjectMapper();
+  		Envelope message = null;
+  		try {
+  			message  = mapper.readValue(kafkaMessage, Envelope.class);
+  			log.info("message = {}", message);
+  		} catch (JsonProcessingException e) {
+  			e.printStackTrace();
+  		}
+  		
+  		if("u".equals(message.getPayload().getOp())) {
+  			saveWithdrawalFrom(message);
+  		}
+  	}
+  	
+  
+  	private void saveWithdrawalFrom(Envelope message) {
+  		String cardId = message.getPayload().getBefore().getId();
+  		long withdrawalAmount
+  				= balanceAfter(message) - balanceBefore(message);
+  		 withdrawalRepository.save(Withdrawal.newWithdrawal(UUID.randomUUID().toString(), withdrawalAmount, cardId));
+  	}
+  
+  	private long balanceAfter(Envelope message) {
+  		return message.getPayload().getAfter().getUsedLimit();
+  	}
+  
+  	private long balanceBefore(Envelope message) {
+  		return message.getPayload().getBefore().getUsedLimit();
+  	}
+  
+  
+  }
+  
+  ```
+
+  - **Kafka Connect에서 보내는 Topic 메세지를 받기위한 Java 클래스를 com.kt.cqrs.event.message 위치에 복사한다**.
+    - 다운로드 위치 : https://github.com/kirobo77/cqrs/sample/topicJava.zip
+
+  - Entity
+
+    - 파일명 : Withdrawal.java
+
+    ```java
+    package com.kt.cqrs.query.repository.entity;
+    
+    import org.springframework.data.annotation.Id;
+    import org.springframework.data.annotation.Transient;
+    import org.springframework.data.domain.Persistable;
+    import org.springframework.data.relational.core.mapping.Table;
+    
+    import lombok.AllArgsConstructor;
+    import lombok.Builder;
+    import lombok.Getter;
+    import lombok.NoArgsConstructor;
+    import lombok.Setter;
+    import lombok.ToString;
+    
+    @Getter
+    @Setter
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @ToString
+    @Table("withdrawal")
+    public class Withdrawal implements Persistable<String>{
+    
+        @Transient
+        private boolean isNew = false;
+        
+        @Id
+        private String id;
+        private long amount;
+        private String cardId;
+        
+        public static Withdrawal newWithdrawal(String id, long amount, String cardId) {
+        	Withdrawal withdrawal = new Withdrawal(true, id, amount, cardId);
+            return withdrawal;
+        }
+    
+        @Override
+        public boolean isNew() {
+            return isNew;
+        }
+    
+    }
+    
+    ```
+
+  - Repository
+
+    -  파일명 : WithdrawalRepository.java
+
+    ```java
+    
+    package com.kt.cqrs.query.repository;
+    
+    import java.util.List;
+    
+    import org.springframework.data.repository.CrudRepository;
+    
+    import com.kt.cqrs.query.repository.entity.Withdrawal;
+    
+    public interface WithdrawalRepository extends CrudRepository<Withdrawal, String> {
+    
+        List<Withdrawal> findByCardId(String cardId);
+    }
+    ```
+
+  - Service
+
+    - 파일명 : WithdrawalQueryService.java
+
+    ```java
+    package com.kt.cqrs.query.service;
+    
+    import java.util.List;
+    
+    import org.springframework.stereotype.Service;
+    
+    import com.kt.cqrs.query.repository.WithdrawalRepository;
+    import com.kt.cqrs.query.repository.entity.Withdrawal;
+    
+    import lombok.RequiredArgsConstructor;
+    import lombok.extern.slf4j.Slf4j;
+    
+    
+    @Slf4j
+    @Service
+    @RequiredArgsConstructor
+    public class WithdrawalQueryService {
+    
+        private final WithdrawalRepository withdrawalRepository;
+    
+    	public List<Withdrawal> withdraw(String cardId) {
+    		return withdrawalRepository.findByCardId(cardId);
+    	}
+    
+    }
+    
+    ```
+
+  - Controller
+
+    - 파일명 : WithdrawalQueryController.java
+
+    ```java
+    package com.kt.cqrs.query.controller;
+    
+    import java.util.List;
+    
+    import javax.websocket.server.PathParam;
+    
+    import org.springframework.http.ResponseEntity;
+    import org.springframework.web.bind.annotation.GetMapping;
+    import org.springframework.web.bind.annotation.RequestMapping;
+    import org.springframework.web.bind.annotation.RestController;
+    
+    import com.kt.cqrs.query.repository.entity.Withdrawal;
+    import com.kt.cqrs.query.service.WithdrawalQueryService;
+    
+    import lombok.RequiredArgsConstructor;
+    
+    @RestController
+    @RequestMapping("/withdrawal")
+    @RequiredArgsConstructor
+    class WithdrawalQueryController {
+    
+    	private final WithdrawalQueryService withdrawalQueryService;
+    
+    	@GetMapping
+    	ResponseEntity<List<Withdrawal>> withdrawals(@PathParam("cardId") String cardId) {
+    		return ResponseEntity.ok().body(withdrawalQueryService.withdraw(cardId));
+    	}
+    }
+    
+    ```
+
+### 3.10.4. 테스트
+
+- 빌드
+  - 이클립스에서 해당 프로젝트익스플로러의 컨텍스트 메뉴의 Run As> Maven Build 를 클릭 한 후 Goals 항목에 아래 명령어를 넣는다.
+
+```
+clean install
+```
+
+- Docker Compose 실행
+
+```shell
+docker-compose up --build
+```
+
+- Kafka Connect 생성
+
+```shell
+curl -i -X POST -H "Accept:application/json" -H  "Content-Type:application/json" http://localhost:8083/connectors/ -d @source.json --verbose
+```
+
+- 카드인출(명령)
+
+```shell
+curl localhost:8080/withdrawal -X POST --header 'Content-Type: application/json' -d '{"card":"3a3e99f0-5ad9-47fa-961d-d75fab32ef0e", "amount": 10.00}' --verbose
+```
+
+- 쿼리로 확인:
+
+```shell
+curl http://localhost:8888/withdrawal?cardId=3a3e99f0-5ad9-47fa-961d-d75fab32ef0e --verbose
+```
+
+- 예상 결과:
+
+```shell
+[{"amount":10.00}]
+```
+
+- H2 데이터확인
+
+```http
+http://localhost:8888/h2-console/
+```
+
+- MySql 데이터확인
+
+```
+docker exec -ti mysql /bin/bash
+....
+cd bin
+./mysql -u root -p   //패수워드 : debezium
+use inventory;
+show tables;
+select * from credit_card;
 ```
 
 
@@ -7372,15 +7675,13 @@ public enum Error {
 - **휴먼 에러**
 - **JPA 사용시 Lazy Loading 불가**
 
-###  
-
-
-
 
 
 
 
 [출처]
+
+https://learn.microsoft.com/ko-kr/azure/architecture/patterns/cqrs
 
 https://wonit.tistory.com/
 
