@@ -7,7 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.kt.cqrs.domain.port.CardWithdrawn;
 import com.kt.cqrs.domain.port.CreditCard;
-import com.kt.cqrs.domain.port.CreditCardDao;
+import com.kt.cqrs.domain.port.CreditCardRepository;
 import com.kt.cqrs.domain.port.EventPublisher;
 
 import lombok.AllArgsConstructor;
@@ -18,12 +18,12 @@ import lombok.extern.slf4j.Slf4j;
 @AllArgsConstructor
 public class WithdrawalCommandService {
 
-    private final CreditCardDao dao;
+    private final CreditCardRepository creditCardRepository;
     private final EventPublisher eventPublisher;
 
     @Transactional
     public void withdraw(UUID cardId, long amount) {
-    	CreditCard creditCard = dao.load(cardId)
+    	CreditCard creditCard = creditCardRepository.load(cardId)
                 .orElseThrow(() -> new IllegalStateException("Cannot find card with id " + cardId));
     	CardWithdrawn event = withdraw(creditCard, amount);
     	eventPublisher.publishEvent(event);
@@ -33,7 +33,7 @@ public class WithdrawalCommandService {
 		if (thereIsMoneyToWithdraw(creditCard, amount)) {
 			creditCard.setUsedLimit(creditCard.getUsedLimit() + amount);
 			log.info("creditCard = {}", creditCard);
-			dao.save(creditCard);
+			creditCardRepository.save(creditCard);
 		} else {
 			throw new NotEnoughMoneyException(creditCard.getId(), amount, availableBalance(creditCard));
 		}

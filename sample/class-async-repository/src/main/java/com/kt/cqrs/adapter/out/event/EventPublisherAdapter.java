@@ -3,7 +3,7 @@ package com.kt.cqrs.adapter.out.event;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
-import com.kt.cqrs.adapter.in.event.DomainEvent;
+import com.kt.cqrs.domain.port.DomainEvent;
 import com.kt.cqrs.domain.port.EventPublisher;
 
 import lombok.AllArgsConstructor;

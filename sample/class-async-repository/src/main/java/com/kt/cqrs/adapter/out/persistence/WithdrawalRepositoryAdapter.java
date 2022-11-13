@@ -6,13 +6,13 @@ import java.util.UUID;
 import org.springframework.stereotype.Repository;
 
 import com.kt.cqrs.domain.port.Withdrawal;
-import com.kt.cqrs.domain.port.WithdrawalDao;
+import com.kt.cqrs.domain.port.WithdrawalRepository;
 
 import lombok.AllArgsConstructor;
 
 @Repository
 @AllArgsConstructor
-public class WithdrawalRepositoryAdapter implements WithdrawalDao {
+public class WithdrawalRepositoryAdapter implements WithdrawalRepository {
 
     private final WithdrawalJdbcRepository withdrawalJdbcRepository;
 

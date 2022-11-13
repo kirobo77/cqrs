@@ -6,7 +6,7 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 
 import com.kt.cqrs.domain.port.Withdrawal;
-import com.kt.cqrs.domain.port.WithdrawalDao;
+import com.kt.cqrs.domain.port.WithdrawalRepository;
 
 import lombok.AllArgsConstructor;
 
@@ -14,9 +14,9 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class WithdrawalQueryService {
 
-	 private final WithdrawalDao withdrawalDao;
+	 private final WithdrawalRepository withdrawalRepository;
 	 
 	public List<Withdrawal> withdrawal(UUID cardId) {
-		return withdrawalDao.list(cardId);
+		return withdrawalRepository.list(cardId);
 	}
 }

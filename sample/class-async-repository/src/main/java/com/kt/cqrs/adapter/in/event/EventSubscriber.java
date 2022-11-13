@@ -13,11 +13,11 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Component
-class EventHandler {
+class EventSubscriber {
 
     private final JdbcTemplate jdbcTemplate;
 
-    EventHandler(JdbcTemplate jdbcTemplate) {
+    EventSubscriber(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
     }
     

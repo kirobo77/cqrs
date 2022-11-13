@@ -5,8 +5,6 @@ import java.util.UUID;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
 
-import com.kt.cqrs.adapter.in.event.DomainEvent;
-
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
