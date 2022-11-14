@@ -2705,7 +2705,7 @@ http://localhost:8080/h2-console/
     
         @Async
         @EventListener
-        public void addWithdrawalOnCardWithdrawn(CardWithdrawn event) {
+        public void addWithdrawalOnCardWithdrawn(CardWithdraw event) {
             jdbcTemplate.update("INSERT INTO WITHDRAWAL(ID, CARD_ID, AMOUNT) VALUES (?,?,?)", UUID.randomUUID(), event.getCardNo(), event.getAmount());
         }
     }
