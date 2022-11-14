@@ -1261,7 +1261,7 @@ Azul Platform Core OpenJDK 지원 구독을 통해 Temurin 에 대한 상용 지
 - 카드인출(명령)
 
 ```shell
-curl localhost:8080/withdrawal -X POST --header 'Content-Type: application/json' -d '{"card":"3a3e99f0-5ad9-47fa-961d-d75fab32ef0e", "amount": 10.00}' --verbose
+curl localhost:8080/withdrawal -X POST --header 'Content-Type: application/json' -d '{"cardId":"3a3e99f0-5ad9-47fa-961d-d75fab32ef0e", "amount": 10.00}' --verbose
 ```
 
 - 인출목록 조회(쿼리)
