@@ -14,5 +14,4 @@ CREATE TRIGGER ON_CARD_WITHDRAWN
   AFTER UPDATE
   ON CREDIT_CARD
   FOR EACH ROW
-CALL "com.kt.cqrs.query.event.EventHandler";
-
+CALL "com.kt.cqrs.command.event.EventHandler";

@@ -3841,10 +3841,10 @@ http://localhost:8080/h2-console/
   │              │  ├─payload
   │              │  ├─repository
   │              │  │  └─entity
+  │              |  ├─event
   │              │  └─service
   │              └─query
   │                  ├─controller
-  │                  ├─event
   │                  ├─payload
   │                  └─service
   └─resources
@@ -3871,7 +3871,7 @@ http://localhost:8080/h2-console/
     AFTER UPDATE
       ON CREDIT_CARD
     FOR EACH ROW
-    CALL "com.kt.cqrs.query.event.CreditCardUsedTrigger";
+    CALL "com.kt.cqrs.command.event.EventHandler";
     ```
   
   - 파일명: data.sql

@@ -8,7 +8,7 @@ import java.util.UUID;
 
 import org.h2.api.Trigger;
 
-public class Eventhandler implements Trigger {
+public class EventHandler implements Trigger {
 
     @Override
     public void init(Connection connection, String s, String s1, String s2, boolean b, int i) throws SQLException {
