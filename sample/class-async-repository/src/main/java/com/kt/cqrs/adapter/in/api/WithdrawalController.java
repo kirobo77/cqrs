@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.kt.cqrs.domain.port.Withdrawal;
-import com.kt.cqrs.domain.service.WithdrawalCommandService;
+import com.kt.cqrs.domain.port.WithdrawalCommandService;
 import com.kt.cqrs.domain.service.WithdrawalQueryService;
 
 import lombok.AllArgsConstructor;

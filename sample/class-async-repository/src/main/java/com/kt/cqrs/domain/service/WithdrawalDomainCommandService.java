@@ -9,6 +9,7 @@ import com.kt.cqrs.domain.port.CardWithdrawn;
 import com.kt.cqrs.domain.port.CreditCard;
 import com.kt.cqrs.domain.port.CreditCardRepository;
 import com.kt.cqrs.domain.port.EventPublisher;
+import com.kt.cqrs.domain.port.WithdrawalCommandService;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,7 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Service
 @AllArgsConstructor
-public class WithdrawalCommandService {
+public class WithdrawalDomainCommandService implements WithdrawalCommandService {
 
     private final CreditCardRepository creditCardRepository;
     private final EventPublisher eventPublisher;
@@ -29,7 +30,7 @@ public class WithdrawalCommandService {
     	eventPublisher.publishEvent(event);
     }
     
-	public CardWithdrawn withdraw(CreditCard creditCard, long amount) {
+	private CardWithdrawn withdraw(CreditCard creditCard, long amount) {
 		if (thereIsMoneyToWithdraw(creditCard, amount)) {
 			creditCard.setUsedLimit(creditCard.getUsedLimit() + amount);
 			log.info("creditCard = {}", creditCard);
@@ -41,7 +42,7 @@ public class WithdrawalCommandService {
 		return new CardWithdrawn(creditCard.getId(), amount);
 	}
 
-	public long availableBalance(CreditCard creditCard) {
+	private long availableBalance(CreditCard creditCard) {
 		return creditCard.getInitialLimit() - creditCard.getUsedLimit();
 	}
 
