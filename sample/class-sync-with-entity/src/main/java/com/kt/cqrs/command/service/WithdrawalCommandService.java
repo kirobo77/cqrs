@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.kt.cqrs.command.repository.CreditCardRepository;
-import com.kt.cqrs.command.repository.WithdrawalRepository;
+import com.kt.cqrs.command.repository.WithdrawalCommandRepository;
 import com.kt.cqrs.command.repository.entity.CreditCard;
 import com.kt.cqrs.command.repository.entity.Withdrawal;
 
@@ -19,7 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 public class WithdrawalCommandService {
 
     private final CreditCardRepository creditCardRepository;
-    private final WithdrawalRepository withdrawalRepository;
+    private final WithdrawalCommandRepository withdrawalRepository;
 
     @Transactional
     public void withdraw(UUID cardId, long amount) {

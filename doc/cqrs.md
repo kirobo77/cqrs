@@ -1302,7 +1302,7 @@ http://localhost:8080/h2-console/
 
 ### 3.6.2. 아키텍처 구성
 
-<img src="./assets/figure21.png" alt="image-20221110163529502" style="zoom:150%;" />![image-20221110163553282](C:\Users\KTDS\AppData\Roaming\Typora\typora-user-images\image-20221110163553282.png)
+<img src="./assets/figure21.png" alt="image-20221110163529502" style="zoom:150%;" />
 
 ### 3.6.3 실습
 
@@ -1638,7 +1638,7 @@ public class NotEnoughMoneyException extends RuntimeException {
       
       ```
 
-    - 파일명 : WithdrawalRepository.java
+    - 파일명 : WithdrawalCommandRepository.java
 
       ```java
       package com.kt.cqrs.command.repository;
@@ -1680,14 +1680,14 @@ public class NotEnoughMoneyException extends RuntimeException {
       public class WithdrawalCommandService {
       
           private final CreditCardRepository creditCardRepository;
-          private final WithdrawalRepository withdrawalRepository;
+          private final WithdrawalCommandRepository withdrawalCommandRepository;
       
           @Transactional
           public void withdraw(UUID cardId, long amount) {
               CreditCard creditCard = creditCardRepository.findById(cardId)
                       .orElseThrow(() -> new IllegalStateException("Cannot find card with id " + cardId));
               withdraw(creditCard, amount);
-      		withdrawalRepository.save(Withdrawal.newWithdrawal(UUID.randomUUID(), amount, creditCard.getId()));
+      		withdrawalCommandRepository.save(Withdrawal.newWithdrawal(UUID.randomUUID(), amount, creditCard.getId()));
           }
       
       	public void withdraw(CreditCard creditCard, long amount) {
@@ -1909,7 +1909,7 @@ public class NotEnoughMoneyException extends RuntimeException {
 - 키드인출(명령)
 
 ```shell
-curl localhost:8080/withdrawal -X POST --header 'Content-Type: application/json' -d '{"card":"3a3e99f0-5ad9-47fa-961d-d75fab32ef0e", "amount": 10.00}' --verbose
+curl localhost:8080/withdrawal -X POST --header 'Content-Type: application/json' -d '{"cardId":"3a3e99f0-5ad9-47fa-961d-d75fab32ef0e", "amount": 10.00}' --verbose
 ```
 
 - 쿼리로 확인:
