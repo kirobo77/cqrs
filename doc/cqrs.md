@@ -5579,7 +5579,7 @@ curl localhost:8080/withdrawal -X POST --header 'Content-Type: application/json'
 - 쿼리로 확인:
 
 ```shell
-curl http://localhost:8080/withdrawal?cardId=3a3e99f0-5ad9-47fa-961d-d75fab32ef0e --verbose
+curl http://localhost:8888/withdrawal?cardId=3a3e99f0-5ad9-47fa-961d-d75fab32ef0e --verbose
 ```
 
 - 예상 결과:
