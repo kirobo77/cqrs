@@ -5618,7 +5618,7 @@ http://localhost:8080/h2-console/
 
 ### 3.12.2. 아키텍처 구성
 
-<img src="C:\Users\김성태\AppData\Roaming\Typora\typora-user-images\image-20221111141952064.png" alt="image-20221111141952064" style="zoom:150%;" />
+<img src="./assets/figur36.png" alt="image-20221111141952064" style="zoom:150%;" />
 
 
 
