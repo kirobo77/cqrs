@@ -4421,7 +4421,7 @@ http://localhost:8080/h2-console/
 
 ### 3.11.2. 아키텍처 구성
 
-![image-20221111142121633](D:\GitHub\cqrs\doc\assets\figure27.png)
+<img src="./assets/figure27.png" alt="image-20221111142121633" style="zoom:150%;" />
 
 ### 3.11.3. 실습 - Docker 환경 구성
 
