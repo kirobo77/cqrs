@@ -6606,7 +6606,7 @@ http://localhost:8888/h2-console/
 - MySql 데이터확인
 
 ```
-docker exec -ti mysql /bin/bash
+docker exec -ti service-db-cdc-mysql-1 bash
 ....
 cd bin
 ./mysql -u root -p   //패수워드 : debezium
