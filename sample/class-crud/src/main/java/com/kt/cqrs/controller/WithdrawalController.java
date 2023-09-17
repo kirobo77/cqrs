@@ -27,7 +27,7 @@ class WithdrawalController {
     }
 
 	@GetMapping
-    ResponseEntity<List<Withdrawal>> withdrawals(@PathParam("cardId") String cardId) {
+    ResponseEntity<List<Withdrawal>> withdrawal(@PathParam("cardId") String cardId) {
         return ResponseEntity.ok().body(withdrawalService.withdraw(UUID.fromString(cardId)));
     }
 }
