@@ -6612,10 +6612,9 @@ http://localhost:8888/h2-console/
 - MySql 데이터확인
 
 ```
+//윈도우 터미널로 실행
 docker exec -ti service-db-cdc-mysql-1 bash
-....
-cd bin
-./mysql -u root -p   //패수워드 : debezium
+mysql -u root -p   //패수워드 : debezium
 use inventory;
 show tables;
 select * from credit_card;
