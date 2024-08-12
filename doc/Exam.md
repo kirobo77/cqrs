@@ -5311,3 +5311,465 @@ Orchestartion은 트랜잭션 처리를 위한 SAGA 인스턴스(Manager)가 별
 > https://dongwooklee96.github.io/post/2021/03/26/two-phase-commit-이란/
 
 > https://cla9.tistory.com/22
+
+
+
+
+
+/
+
+Posts
+
+/
+
+![img](data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==)
+
+MSA, 배달의 민족 마이크로서비스 여행기 정리
+
+Search
+
+Share
+
+![moon](https://cdn.lazyrockets.com/_next/static/media/dark-mode.4361da89.png)
+
+![sun](https://cdn.lazyrockets.com/_next/static/media/light-mode.1da8c58f.png)
+
+🏛️
+
+# MSA, 배달의 민족 마이크로서비스 여행기 정리
+
+
+
+작성일
+
+2022/05/29
+
+
+
+수정일
+
+
+
+카테고리
+
+아키텍처
+
+
+
+태그
+
+MSA
+
+Architecture
+
+우아콘 2020 - 배달의 민족 마이크로서비스를 제 글로 정리한 내용입니다. 
+
+[우아콘2020] 배달의민족 마이크로서비스 여행기
+
+거대한 모놀리틱 서비스를 마이크로서비스로 이전한 지난 5년간의 여정을 공유합니다.🎤 발표자 : 우아한형제들 김영한----------------------------------------------------------------------------2020년 12월 16일 우아한...
+
+![img](https://oopy.lazyrockets.com/api/v2/notion/image?src=https%3A%2F%2Fwww.youtube.com%2Fs%2Fdesktop%2F8498231a%2Fimg%2Ffavicon.ico&blockId=7d95b904-5b66-469b-aafc-f646212f880d&width=32)
+
+https://www.youtube.com/watch?v=BnS6343GTkY&t=1987s
+
+![img](https://oopy.lazyrockets.com/api/v2/notion/image?src=https%3A%2F%2Fi.ytimg.com%2Fvi%2FBnS6343GTkY%2Fhqdefault.jpg&blockId=7d95b904-5b66-469b-aafc-f646212f880d&width=512)
+
+개요
+
+배달의 민족 마이크로서비스 여행기
+
+MSA
+
+Why - 왜 MSA를 도입해야 했을까?
+
+How - 어떻게 MSA를 도입했을까?
+
+What - MSA를 도입한 결과는?
+
+이벤트 기반 아키텍처
+
+why - REST api 중심에서 이벤트 중심으로 바꾼 이유는?
+
+how - 어떻게 이벤트 기반 아키텍처를 구현할까?
+
+what - 이벤트 중심 아키텍처로 전환한 결과는?
+
+CQRS (명령과 조회 분리)
+
+why - 왜 명령과 조회를 분리해야 했을까?
+
+how - CQRS를 도입하기
+
+what - CQRS 적용으로 얻은 것
+
+마치며
+
+## 개요
+
+MSA, 시스템 신뢰성, event 중심 설계, CQRS에 대해 다룹니다. 
+
+Why 왜 필요하며 How 어떻게 도입했는지 What 어떤 결과가 도출되었는지
+
+## 배달의 민족 마이크로서비스 여행기
+
+### MSA
+
+#### Why - 왜 MSA를 도입해야 했을까?
+
+배달의 민족의 초기 서버는 PHP, Ruby DB의 스펙으로 작성되었습니다.
+
+사업적 요구사항을 처리하며 점점 비대해진 시스템은 많은 장애를 유발했고, [모놀리식 아키텍처](https://sihyung92.oopy.io/architecture/woowa-msa-travel#833f9847cb6d46db8ada518c715f22cf)였기에 각 도메인의 장애는 [단일 장애점](https://sihyung92.oopy.io/architecture/woowa-msa-travel#f5dd156a0df2421b8a7ab7b149a088e3)으로 동작합니다.
+
+![img](https://oopy.lazyrockets.com/api/v2/notion/image?src=https%3A%2F%2Fs3-us-west-2.amazonaws.com%2Fsecure.notion-static.com%2F53e4219d-5bc9-4037-917f-9192c032b1ca%2FUntitled.png&blockId=547b0458-a4c1-4b7c-9fec-702c68f9eb9e)
+
+2015년 당시의 모놀리틱 구조 서버.
+
+![img](https://oopy.lazyrockets.com/api/v2/notion/image?src=https%3A%2F%2Fs3-us-west-2.amazonaws.com%2Fsecure.notion-static.com%2F6b3f2fe7-3e48-4373-8e5e-90c1158adbf2%2FUntitled.png&blockId=cf727cf3-32a8-4684-8dae-ddcdc781cc92)
+
+루비 서버에서 장애가 나면 모든 서비스가 중지된다.
+
+하지만 예컨데 리뷰 작성이 안 된다고 하여 가게 상품 목록을 못 보는 일은 없어야 겠죠. 리뷰와 관련된 코드를 따로 분리하여 별도 서버에서 처리한다면, 리뷰 장애가 발생하더라도 사용자는 상품 주문에는 영향을 받지 않을겁니다.
+
+위와 같이, [bounded context](https://sihyung92.oopy.io/architecture/woowa-msa-travel#7b13ab4ff2e84ae7b540055aa239b4f4) (도메인의 범주)에 따라 서버를 분리한 패턴을 MSA(Micro Service Architecture)라고 부릅니다.
+
+서버를 장애로부터 구원하기 위해 MSA 아키텍처를 도입하기로 결정합니다.
+
+1.
+
+모놀리식 아키텍처 Monolithic architecture : 한 개의 서버 코드로 모든 비지니스 요구사항을 처리하는 아키텍처
+
+2.
+
+단일 장애점 : 시스템 구성 요소 중, 동작하지 않으면 전체 시스템이 중단되는 요소
+
+3.
+
+bounded context : 각각의 도메인의 경계. 자세한 내용은 [eric evans의 Domain-Driven-Design](http://www.yes24.com/Product/Goods/5312881) 참고
+
+#### How - 어떻게 MSA를 도입했을까?
+
+2016년, 결제 서비스를 기존 서비스로부터 분리합니다. 이 때 가장 잦은 장애 원인이 되던 데이터베이스를 새롭게 구축합니다. 결제 서비스가 다운되어도 전화주문 등은 가능하기에, 전사 장애로 전파되는 것을 막을 수 있습니다.
+
+데이터베이스의 경우 [IDC](https://sihyung92.oopy.io/architecture/woowa-msa-travel#35084c63883441d4b17c6928c856f270)에서 구축되어 있는 Ruby DB로 부터 AWS cloud로 이전하는 과정을 거칩니다. (결제 DB는 법의 제약으로 IDC에 설치)
+
+다양한 경로로 들어오는 주문(전화, POS, 고객센터)을 처리하는 주문중계 서비스는 Node js를 활용해 빠르게 분리합니다. 
+
+![img](https://oopy.lazyrockets.com/api/v2/notion/image?src=https%3A%2F%2Fs3-us-west-2.amazonaws.com%2Fsecure.notion-static.com%2Fbb09324e-8e91-489c-8d21-09c9b47724ce%2FUntitled.png&blockId=5f7e9e3b-031c-4133-890a-fbabe40a64bf)
+
+결제를 마이크로 서비스로 독립
+
+![img](https://oopy.lazyrockets.com/api/v2/notion/image?src=https%3A%2F%2Fs3-us-west-2.amazonaws.com%2Fsecure.notion-static.com%2F04227b34-6f09-4f7f-a8a9-c550b0543b4f%2FUntitled.png&blockId=b36ecb25-911f-4ab7-9358-643e14cde1a6)
+
+대용량 트래픽 처리보다 빠른 구현이 중요하여 Node 활용을 통해 분리
+
+2017년 이후 트래픽이 가파르게 상승해 하루가 멀다하고 장애가 발생하고, 장애 원인이 되던 서비스들을 하나하나 분리하기 시작합니다. 
+
+![img](https://oopy.lazyrockets.com/api/v2/notion/image?src=https%3A%2F%2Fs3-us-west-2.amazonaws.com%2Fsecure.notion-static.com%2F42fe5e2d-4bd3-4a85-8618-30f19f717c0f%2FUntitled.png&blockId=1d75daeb-76f7-46d4-80f4-fd569392c4e6)
+
+검색, 메뉴, 정산 시스템 독립
+
+![img](https://oopy.lazyrockets.com/api/v2/notion/image?src=https%3A%2F%2Fs3-us-west-2.amazonaws.com%2Fsecure.notion-static.com%2F916367f3-be26-4239-a5d4-b7dd5aba20ab%2FUntitled.png&blockId=7dea2cba-da47-43f9-b6c9-624023b183de)
+
+쿠폰, 주문, 포인트 시스템 독립
+
+함부로 이전할 수 없던 레거시 시스템들이 남았습니다. 
+
+1.
+
+엮어있는 시스템이 많아 조금만 잘못되어도 전사 장애로 이어짐
+
+2.
+
+기존 데이터베이스 테이블 하나 하나가 수 백개의 칼럼으로 이루어진 복잡도 
+
+개발팀에선 레거시 시스템의 이전을 위해 최소 3개월의 시간을 필요했고, 레거시 이전의 중요성을 인정받아 18년 12월, 프로젝트 먼데이라는 이름의 레거시 개편 프로젝트로 이어집니다. 
+
+우아한형제들은 프로젝트 먼데이 기간동안 장애 전파를 막고 다수 트래픽의 고성능 조회를 위해서 이벤트 기반 아키텍처와 CQRS 아키텍처를 도입합니다.
+
+이벤트 기반과 CQRS는 하단에서 이어 다루겠습니다.
+
+![img](https://oopy.lazyrockets.com/api/v2/notion/image?src=https%3A%2F%2Fs3-us-west-2.amazonaws.com%2Fsecure.notion-static.com%2F07a24a49-e084-441d-9473-8484a4140620%2FUntitled.png&blockId=5fc29f85-8baf-4a9e-bd88-853f86ab1511)
+
+레거시 시스템을 제거하고 MSA 이전을 마친 모습
+
+1.
+
+IDC (Internet Data Center) : 서버 컴퓨터와 네트워크를 제공하는 시설. 
+
+#### What - MSA를 도입한 결과는?
+
+MSA의 도입 결과로 
+
+1.
+
+시스템 일부 장애에 대한 저항력을 키워 [시스템 신뢰성](https://sihyung92.oopy.io/architecture/woowa-msa-travel#71d61ad370024c7fa61e333c7c7bed1a)를 높이고, 
+
+2.
+
+리뷰 작성 이벤트, 쿠폰 이벤트 등 각 부문별에 증가할 트래픽에 맞서 자유로운 [스케일링](https://sihyung92.oopy.io/architecture/woowa-msa-travel#bb8f375e751142d7858edbda18eee310)이 가능해졌습니다.
+
+1.
+
+시스템 신뢰성 : 시스템이 정상 요청으로부터 정상 응답을 보낼 수 있는 정도를 나타냄. [사이트 신뢰성 엔지니어링](http://www.kyobobook.co.kr/product/detailViewKor.laf?mallGb=KOR&ejkGb=KOR&barcode=9791188621088) 참고
+
+2.
+
+스케일링 Scaling : 트래픽 증가로 서버의 부하가 커졌을 때, 서버를 증설하는 것. 양을 늘리는 스케일 아웃과 성능을 높이는 스케일 업이 있다. 
+
+### 이벤트 기반 아키텍처
+
+#### why - REST api 중심에서 이벤트 중심으로 바꾼 이유는? 
+
+MSA 아키텍처를 적용하면 서버 수가 늘어나고, 서버간의 소통을 위한 Rest API 호출이 빈번해집니다. 해당 API에서 장애가 나게 되면 어떻게 될까요?
+
+![img](https://oopy.lazyrockets.com/api/v2/notion/image?src=https%3A%2F%2Fs3-us-west-2.amazonaws.com%2Fsecure.notion-static.com%2F99fb413b-ebf9-4ce8-a480-af97ed318cba%2FUntitled.png&blockId=10504440-0401-4a62-8bed-91520cbdb134)
+
+각각의 화살표는 API 요청이다.
+
+![img](https://oopy.lazyrockets.com/api/v2/notion/image?src=https%3A%2F%2Fs3-us-west-2.amazonaws.com%2Fsecure.notion-static.com%2F02f7dd56-4e10-48ea-acda-d86d64b7b5fc%2FUntitled.png&blockId=686a7252-d5a7-4dcc-849e-2e54386742da)
+
+이 중 리뷰시스템에 장애가 난다면?
+
+예를들어 리뷰 시스템은  리뷰를 작성해 달라는 푸쉬 알림을 위해 주문 완료 정보가 필요합니다. 이는 주문 시스템에서 리뷰 시스템으로 전달해주어야 하는데, 리뷰 시스템 측 API에서 timeout 또는 500에러가 발생하는 상황이 있을 수 있습니다. 
+
+장애의 전파를 막기위해 도입한 MSA인데, 해당 API 요청이 실패함으로써 주문시스템도 어떤 식으로든 영향을 받게 됩니다.
+
+또한 주문 시스템을 개발하는 개발자는 리뷰 시스템, 레거시 DB, 라이더스 시스템에 대해 이해하고 주문 서버 소스 코드에 변경이 있을 때마다 이에 대한 여파를 고민해야 합니다. 
+
+해당 난점을 극복하기 위해 서버간의 메시지를 전달하는 [미들웨어](https://sihyung92.oopy.io/architecture/woowa-msa-travel#2e4dcabcbdc1468a9fe62ce98a3390bd)인 메시징 큐를 도입하고, 각각의 서버는 이벤트를 통해 소통하는 이벤트 기반 아키텍처를 구성합니다.
+
+1.
+
+미들웨어 : 서로 다른 어플리케이션이 서로 통신하는데 사용되는 소프트웨어.
+
+#### how - 어떻게 이벤트 기반 아키텍처를 구현할까?
+
+다른 어플리케이션에서 필요한 주문 정보를, 이벤트라는 이름으로 정의합니다.
+
+이후 메시징 큐에 이벤트를 발행하면, 필요한 어플리케이션에서 해당 이벤트를 구독해갑니다. (pub-sub 패턴)
+
+pub-sub 기반의 메시징 큐에는 Apache Kafka 등 다양한 종류가 있으나, 당시 개발팀에 [AWS SNS](https://aws.amazon.com/ko/sqs/)(Simple Notification Service)와 [AWS SQS](https://aws.amazon.com/ko/sns/?whats-new-cards.sort-by=item.additionalFields.postDateTime&whats-new-cards.sort-order=desc)(Simple Queue Service)에 대한 이해도가 있었으므로 발행자 역할로SNS, 구독자 역할로 SQS를 활용합니다.
+
+![img](https://oopy.lazyrockets.com/api/v2/notion/image?src=https%3A%2F%2Fs3-us-west-2.amazonaws.com%2Fsecure.notion-static.com%2F796b7885-6b63-43e8-b76a-2c3724169ab7%2FUntitled.png&blockId=8ea37fe9-82ab-4dca-af80-a8d7b5c82905)
+
+이벤트 기반 아키텍처를 선택한 후
+
+해당 구조에서 [why](https://sihyung92.oopy.io/architecture/woowa-msa-travel#30fc0e0ce15c4235a1f90f347da324a6)에서 들었던 주문 시스템 예시를 다시 들어보겠습니다. 주문이 생성된다면 SNS에 해당 이벤트를 발행합니다. 리뷰 시스템은 SQS를 활용해 주문시스템이 이벤트를 발행하는 SNS를 구독하고 있다가, 이벤트를 수신하면 리뷰 알림을 전달해주는 방식으로 활용할 수 있습니다.
+
+이 아키텍처에는 여러가지 장점이 있습니다.
+
+1.
+
+설사 리뷰 시스템이 다운 되더라도, 향후 복구되었을 때 SQS에 있는 이벤트를 재수신하여 처리할 수 있습니다.
+
+2.
+
+주문 시스템에서 주문 생성이 실패하는 문제가 발생하면, 문제가 되었던 부분을 찾아 이벤트를 재발행하는 것으로 해소됩니다.
+
+3.
+
+주문 시스템이 더이상 다른 시스템에 대해 자세히 알 필요가 없어집니다. 주문 이벤트를 발행하고 나면, 그 이벤트로 각 도메인에 특화된 비즈니스 로직을 수행하는 건 각 시스템의 역할로 맡겨집니다.
+
+이 과정에서 생긴 여러가지 노하우는 다음과 같습니다.
+
+![img](https://oopy.lazyrockets.com/api/v2/notion/image?src=https%3A%2F%2Fs3-us-west-2.amazonaws.com%2Fsecure.notion-static.com%2F511f54db-05a0-463f-99cb-3923193df28c%2FUntitled.png&blockId=9cf8afcd-e5fa-4ff5-8dd8-614a6b01f59b)
+
+![img](https://oopy.lazyrockets.com/api/v2/notion/image?src=https%3A%2F%2Fs3-us-west-2.amazonaws.com%2Fsecure.notion-static.com%2Fc23c58b7-87ab-493d-90e9-81736b30f432%2FUntitled.png&blockId=bc41cae2-1ae9-480b-a924-1bb3bcce1523)
+
+1.
+
+메시지의 전달이 지연되면, 각 서버간의 데이터가 동기화되어 있지 않을 수 있습니다. 이런 데이터의 정합성 문제를 다루기 위해 Eventually Consistency, 최종적 일관성이라는 개념을 활용합니다. 데이터는 이벤트가 다 전달되고 나면 최종적으로 완전한 상태가 된다는 개념으로, 이벤트의 전달이 수백 ms에서 늦어도 3초 안에는 이루어진다는 경험적 토대를 갖추고 있습니다.
+
+a.
+
+만약 문제가 발생하면 해당 시스템이 문제되는 이벤트를 재발행하는 방식으로 오류를 복구할 수 있습니다. 
+
+2.
+
+Zero-Payload 방식은 이벤트에 변경사항에 대한 내용이 모두 들어있는게 아니라 이벤트의 종류 와 키 값 만 전달하는 방식입니다. 
+
+a.
+
+이는 두 가지 이유 때문입니다.
+
+i.
+
+첫번째는 이벤트의 순서를 고려하지 않기 위함입니다. 이벤트에 모든 변경정보를 담게 되면 서버에 정보를 재조회할 필요가 없지만, 그러면 이벤트의 순서가 중요해집니다. 이를 보정하는 것이 불가능한 건 아니지만, 시스템 복잡도를 줄이기 위해 API를 재조회하는 방식을 활용합니다. 
+
+ii.
+
+두번째는 각 시스템마다 원하는 데이터가 다르기  때문입니다. 모든 정보를 이벤트에 담는 것은 네트워크 부하를 유발하기에, 모든 데이터를 담기보단 각 서비스가 동일 이벤트로 다른 API를 활용할 수 있도록 각 서비스에 특화된 API를 제공합니다.
+
+b.
+
+구독하고 있는 서비스에선 이후 이벤트와 관련된 추가 정보가 필요하다면, 해당 키 값으로 해당 서비스가 필요한 정보를 담고 있는 API를 요청합니다.
+
+3.
+
+최소 데이터 보관 원칙은 각 서비스에서 타 도메인 정보가 필요한 경우, 필요한 최소한의 정보만 저장하는 것입니다. 이를 통해 내 서비스에서 필요하지 않은 타 도메인의 변경사항에 민감하게 반응할 필요 없어집니다.
+
+#### what - 이벤트 중심 아키텍처로 전환한 결과는? 
+
+이벤트 중심 아키텍처로의 전환 후
+
+1.
+
+각 서비스간의 의존성이 낮아지고
+
+2.
+
+각 서비스가 다운되는 상황에서 이벤트를 통해 쉽게 [페일 오버](https://sihyung92.oopy.io/architecture/woowa-msa-travel#8df8a130a8aa466c98816343811c08a3)할 수 있습니다.
+
+1.
+
+페일 오버 fail over : 장애 대비 기능을 의미합니다. 페일 오버의 예로 장애 발생시 예비 시스템으로 전환, 장애 내용에 대한 후처리 등이 있습니다. 
+
+### CQRS (명령과 조회 분리)
+
+#### why - 왜 명령과 조회를 분리해야 했을까?
+
+[CQRS 패턴](https://docs.microsoft.com/ko-kr/azure/architecture/patterns/cqrs)은 데이터베이스에 대한 읽기와 수정, 삭제 작업은 명령 (command)으로, 조회 작업은 조회(query)로 정의하고 두 작업을 분리하는 패턴을 의미합니다. (Command and Query Responsiblillity Segregation)
+
+분리라는 말의 의미는 데이터베이스 내부에서 동일한 도메인에 대해 조회용 모델과 명령용 모델을 분리하는 것을 의미합니다. 이 아키텍처에서 조회 요청은 조회용 모델을 통해, 명령 요청은 명령용 모델을 통해 수행합니다.
+
+![img](https://oopy.lazyrockets.com/api/v2/notion/image?src=https%3A%2F%2Fs3-us-west-2.amazonaws.com%2Fsecure.notion-static.com%2F666cbbae-3e48-4cad-ab98-76b6f275f862%2FUntitled.png&blockId=a8d71987-c9fc-434b-9ed7-48cc7df04440)
+
+기존의 데이터베이스 접근 모델. 조회와 명령에 대한 구분 없이 동일한 데이터베이스에 질의한다.
+
+![img](https://oopy.lazyrockets.com/api/v2/notion/image?src=https%3A%2F%2Fs3-us-west-2.amazonaws.com%2Fsecure.notion-static.com%2Ff71cc44f-ea19-4b1a-9fad-2dd24d9d0b7c%2FUntitled.png&blockId=f1cc4c09-0bae-4510-b922-645b56a8f25e)
+
+CQRS 적용 모델. 명령은 write model 에, 조회는 read model을 통해 수행한다.
+
+이 작업은 2018년 배달의민족에서 가장 큰 장애원인 중 하나였던 가게상세 시스템에 필요했습니다. 트래픽이 상승하며 기존 PHP 코드로 감당할 수 없는 부하가 들어온 건데요, 이는 조회시 DB에서 필요한 정보를 모두 조회하기 때문에 과도한 트래픽을 받으면 장애가 발생할 확률이 높았습니다.
+
+![img](https://oopy.lazyrockets.com/api/v2/notion/image?src=https%3A%2F%2Fs3-us-west-2.amazonaws.com%2Fsecure.notion-static.com%2Fe0aa6a70-4fb1-4f3b-a537-9f0ca5306721%2FUntitled.png&blockId=492fe976-ae34-46a7-a958-7af73c027514)
+
+가게 상세 초기 모델. PHP로부터 상세 정보 요청을 받으면, 필요한 데이터를 모두 조회해 응답한다.
+
+초기엔 DB 서버에 대한 스케일업(성능 향상)으로 대응했지만, 스케일업엔 물리적으로도 소프트웨어 적으로도 한계가 있습니다. 
+
+이 상황을 해결하기 위해 CQRS 아키텍처를 도입합니다.
+
+#### how - CQRS를 도입하기
+
+처음 진행한 것은 대용량 트래픽 처리에 적합한 JAVA 도입과, 리드용 모델로 [AWS 다이나모 DB](https://sihyung92.oopy.io/architecture/woowa-msa-travel#2def0f7803b94e028a0d2051eca17eeb)를 적용한 것입니다. 
+
+![img](https://oopy.lazyrockets.com/api/v2/notion/image?src=https%3A%2F%2Fs3-us-west-2.amazonaws.com%2Fsecure.notion-static.com%2F9e40beac-19a9-4baf-a354-82bea26c12ee%2FUntitled.png&blockId=465a47b4-81b8-4c68-8ec9-945420130856)
+
+가게상세 CQRS 초기 모델
+
+1분 ~ 5분 간격의 스프링 배치 프로그램을 돌립니다. 이 때 작업은 기존 데이터베이스로부터 가게에 대한 ID를 key로 하여 다이나모 DB에 프론트 노출에 필요한 정보를 모두 저장하는 것입니다. 이후 가게에 대한 조회 요청이 들어오면 더이상 기존 DB에서 조회하지 않고 가게 ID를 가지고 다이나모 DB에서 조회합니다. 
+
+이 방식은 더 이상 기존 DB가 조회요청을 처리하지 않으므로 조회 트래픽이 증가한다고 하여 장애가 발생하지 않습니다.
+
+하지만 이 방식의 아래와 같은 문제가 있어 완전하지 않습니다.
+
+1.
+
+배치의 작동 주기가 1분 ~ 5분이므로 데이터의 동기화가 늦습니다.
+
+2.
+
+요구사항이 변경되면 배치에서 다이나모 DB로 업데이트 하는 쿼리를 일일이 수정해야 합니다.
+
+위 문제를 극복하기 위해 먼데이 프로젝트에선 MSA와 이벤트 중심 기반의 설계로 전환하는 것에 더해 위 한계를 극복한 CQRS를 적용하는 과제를 포함합니다.
+
+앞서 MSA에서의 주요한 도입 이유 중 하나를 장애의 전파를 방지하는 것이라 적었는데요, CQRS 아키텍처도 이와 밀접한 연관이 있습니다.
+
+아래와 같은 MSA 아키텍처를 완성하였습니다. 노란 화살표는 조회 API를, 빨간 화살표는 명령 API를 의미합니다.
+
+![img](https://oopy.lazyrockets.com/api/v2/notion/image?src=https%3A%2F%2Fs3-us-west-2.amazonaws.com%2Fsecure.notion-static.com%2F2d896a49-0586-4892-9b40-7da9194e176c%2FUntitled.png&blockId=0b3cea4e-681a-4d5a-b1e4-50a7c97b2ab6)
+
+서로 다른 서비스를 조회하는 MSA구조
+
+위 구조는 두 가지 상황에 취약합니다. 
+
+•
+
+원장 데이터를 포함한 서비스가 장애가 생긴 경우, 앞단 서비스로 장애가 전파됩니다.
+
+![img](https://oopy.lazyrockets.com/api/v2/notion/image?src=https%3A%2F%2Fs3-us-west-2.amazonaws.com%2Fsecure.notion-static.com%2Fb49c2484-738d-47df-b3d7-0b5c76ce6151%2FUntitled.png&blockId=47a0e06f-e016-4465-bf64-03bf506c6a59)
+
+광고 시스템에 장애가 생기면 광고 리스팅, 가게노출이 장애가 난다.
+
+![img](https://oopy.lazyrockets.com/api/v2/notion/image?src=https%3A%2F%2Fs3-us-west-2.amazonaws.com%2Fsecure.notion-static.com%2F6442af48-1ed5-414a-85d6-3c39dad7e08e%2FUntitled.png&blockId=97a7a7d5-22a9-477b-9df1-0935d3369c04)
+
+가게/업주 시스템에 장애가 생기면 바로결제 서비스, 광고 리스팅, 가게 노출서비스에 장애가 난다.
+
+•
+
+큰 트래픽을 받으면, 뒷단의 서비스들로 트래픽이 전파됩니다.
+
+![img](https://oopy.lazyrockets.com/api/v2/notion/image?src=https%3A%2F%2Fs3-us-west-2.amazonaws.com%2Fsecure.notion-static.com%2F035b8319-aba0-4908-abe6-ac655c7fa316%2FUntitled.png&blockId=de416582-d5b3-4b1d-8dcf-ca8541fee072)
+
+초당 15000회의 조회를 받으면, 광고 및 가게/업주 시스템까지 동일한 트래픽을 받게 된다.
+
+먼데이 프로젝트의 주요 목표 중 하나는 가게, 광고 같은 내부 시스템이나 DB에 장애가 발생해도 고객 서비스를 유지하고 주문도 가능해야 한다는 점이었습니다.
+
+이를 위해 전사 시스템을 Command 시스템과 Query 시스템으로 분리하는 CQRS 아키텍처 적용를 적용하기로 의사결정합니다. 
+
+앞서 설명한 가게상세의 시스템도 DB 장애와 사용자 서비스를 격리하는 효과가 있었지만, 1분 ~ 5분의 동기화 문제점이 있었죠. 이를 해결하기 위해 이벤트 중심 아키텍처를 활용합니다.
+
+![img](https://oopy.lazyrockets.com/api/v2/notion/image?src=https%3A%2F%2Fs3-us-west-2.amazonaws.com%2Fsecure.notion-static.com%2Fb512c346-b73f-4e9b-be7c-559793b6b9bd%2FUntitled.png&blockId=1a0f729f-74a1-4be5-8d39-66507ead141c)
+
+이벤트 중심 아키텍처를 활용한 CQRS 아키텍처
+
+이제 사용자 서비스는 더이상 광고 및 가게/업주 서비스를 직접 호출하지 않습니다. 사용자 서비스에서 직접 조회용 DB를 만들어 고객의 요청에 응답합니다.
+
+이제 광고와 가게/업주 DB는 명령형 시스템(어드민 페이지)에서만 호출합니다. 
+
+명령형 시스템에 변경 사항이 생기면, 조회용 시스템이 이를 수신할 수 있도록 이벤트를 발행합니다.
+
+![img](https://oopy.lazyrockets.com/api/v2/notion/image?src=https%3A%2F%2Fs3-us-west-2.amazonaws.com%2Fsecure.notion-static.com%2Ff8c0481a-de31-4c70-939c-bde274ddf449%2FUntitled.png&blockId=adc9a05b-d490-4843-ba1e-e09fde73f393)
+
+가게/업주 변경 데이터가 필요한 서비스들은 가게/업주 이벤트를 구독하면 된다.
+
+이벤트가 발행되면, 각각의 서비스는 데이터를 수신해 서비스 자체 DB를 업데이트 합니다.  
+
+이 때 어떤 DB를 활용할지는 각각의 서비스에 특화하여 사용할 수 있습니다. 데이터의 엄밀성이 중요한 가게/업주 시스템은 RDB를, 검색이 포함된 광고리스팅 서비스에선 [ES](https://sihyung92.oopy.io/architecture/woowa-msa-travel#f78c95c979254a318d9fbd0ca52f9c9d)를, 가게 노출엔 [Redis](https://sihyung92.oopy.io/architecture/woowa-msa-travel#626120634d624584b861c7caece59c5d)나 다이나모 DB를 활용하는 자율성도 얻을 수 있습니다.
+
+![img](https://oopy.lazyrockets.com/api/v2/notion/image?src=https%3A%2F%2Fs3-us-west-2.amazonaws.com%2Fsecure.notion-static.com%2F0e3ce94e-a603-4044-b2a9-0ed5cc88a35c%2FUntitled.png&blockId=5df2a40a-b867-43b2-bf4f-d25ab21cd48e)
+
+데이터 동기화에도 장애 상황이 발생할 수 있습니다.
+
+1.
+
+장애의 주체가 이벤트를 발행하는 서비스라면 문제가 생긴 이벤트를 재발행 해주면 됩니다.
+
+2.
+
+간혹 이벤트를 전달해주는 큐 자체에 장애(SNS, SQS)가 생길 때가 있습니다. 상황을 대비해 최근 변경사항을 메시지 큐를 대신해 전달할 수 있는 Import API를 구현합니다.  
+
+1.
+
+[AWS 다이나모 DB](https://aws.amazon.com/ko/dynamodb/?trk=048f3e6b-4524-4a68-b4dd-337aeabc08f8&sc_channel=ps&sc_campaign=acquisition&sc_medium=ACQ-P|PS-GO|Brand|Desktop|SU|Database|DynamoDB|KR|EN|Text&s_kwcid=AL!4422!3!489215167672!e!!g!!amazon dynamodb&ef_id=CjwKCAjws8yUBhA1EiwAi_tpEW4W9ivoy6pVA3z5fn8wrzR0AmPBMk_ykbUtHc7Xa_XDm1Zrut9ExRoCANwQAvD_BwE:G:s&s_kwcid=AL!4422!3!489215167672!e!!g!!amazon dynamodb) : key-value 형태로 값을 저장하는 NoSql 데이터베이스. 10밀리초 미만 기반의 응답과 무제한에 가까운 데이터 저장이 가능한 것이 특징이다.
+
+2.
+
+ES, elastic search : 문자열 검색에 특화된 오픈소스 NoSQL 데이터베이스.  
+
+3.
+
+Redis : key-value 형식의 메모리 데이터베이스. 하드디스크가 아닌 메모리에 데이터를 저장하므로 데이터 조회가 빠르다는 특징이 있다.
+
+#### what - CQRS 적용으로 얻은 것
+
+CQRS의 적용을 통해 대량 트래픽이 발생하는 시스템에서 조회와 명령간의 불균형을 해소할 수 있었습니다. 
+
+이를 통해 성능이 중요한 외부 시스템과 비즈니스 명령이 많은 내부 시스템을 분리할 수 있고, 다양한 상황에 대해 유연하게 대처할 수 있습니다.
+
+## 마치며
+
+100명이 사용하는 서비스를 만드는 것과 100만명이 사용하는 서비스를 만드는 것에는 고민할 지점이 다르다는 것이 인상깊습니다. 이 글을 정리하며 요즘 유행하는 MSA에 대해 생각해보게 되었는데, 저만의 결론은 다음과 같습니다.
+
+1.
+
+MSA는 대량 트래픽과 고도화된 시스템을 다루는 기법이다.
+
+2.
+
+그러므로 MSA를 도입하기 앞서 내 시스템이 어느 지점에 와있는가? 를 파악하는 것이 우선이다. MSA를 구축하는 비용이 크기 때문에 1. 고도화된 장애격리 정책 & 확장성이 더 중요한지, 2. 비즈니스 로직을 구현해내는게 더 중요한지 판단하고 그에 맞춰 결정해야 한다.
+
+또 이벤트 중심 설계와 CQRS 패턴의 설계를 통해 대용량 트래픽을 제어할 수 있다는 점을 알게 된 것도 큰 수확이라고 생각합니다.
+
+[Made with ![img](https://cdn.lazyrockets.com/_next/static/media/oopy-text-black.16b3bf38.svg)](https://www.oopy.io/en?utm_source=oopy&utm_medium=footer&utm_campaign=temp&referrer=sihyung92.oopy.io)
